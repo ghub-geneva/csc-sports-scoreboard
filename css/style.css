@@ -590,6 +590,31 @@ a { color: var(--blue); }
 
 .hint { font-size: .82rem; color: var(--muted); margin: -6px 0 12px; }
 
+/* set-score grid (volleyball, best of 3) */
+.sets-grid { display: flex; flex-direction: column; gap: 8px; max-width: 360px; }
+.sets-head, .set-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.sets-head span {
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.sets-head span:first-child { text-align: left; }
+.set-row .set-lbl { font-weight: 700; font-size: .85rem; }
+.set-row input {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+}
+.sets-note { color: var(--muted); font-weight: 600; }
+
 /* placement rows in the special-events form */
 .ev-place-row {
   display: flex;

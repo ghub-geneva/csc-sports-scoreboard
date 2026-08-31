@@ -373,6 +373,31 @@ function loserOf(m) {
   return w === m.teamA ? m.teamB : m.teamA;
 }
 
+/* ---- Set-based sports (Volleyball, best of 3) ------------- */
+function isSetSport(sportId) { return sportId === 'volleyball'; }
+
+/* Count sets won per side from a sets array [[aPts,bPts], ...]. */
+function setsWon(sets) {
+  let a = 0, b = 0;
+  (sets || []).forEach(s => {
+    if (!s) return;
+    const x = s[0], y = s[1];
+    if (x === '' || y === '' || x == null || y == null) return;
+    if (Number(x) > Number(y)) a++;
+    else if (Number(y) > Number(x)) b++;
+  });
+  return { a, b };
+}
+
+/* Readable set breakdown, e.g. "25-20, 23-25, 15-12". */
+function setsBreakdown(m) {
+  if (!m.sets || !m.sets.length) return '';
+  return m.sets
+    .filter(s => s && s[0] !== '' && s[1] !== '' && s[0] != null && s[1] != null)
+    .map(s => s[0] + '-' + s[1])
+    .join(', ');
+}
+
 /* =============================================================
    Tournament stages within a sport category.
    Single round robin decides seeding, then two placement games:

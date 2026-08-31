@@ -15,6 +15,7 @@ const el = {
   stage: $('f-stage'), status: $('f-status'),
   wrapScores: $('wrap-scores'), scoreA: $('f-scoreA'), scoreB: $('f-scoreB'),
   lblScoreA: $('lbl-scoreA'), lblScoreB: $('lbl-scoreB'),
+  wrapSets: $('wrap-sets'), setTeamA: $('set-team-a'), setTeamB: $('set-team-b'),
   submitBtn: $('submit-btn'), cancelEdit: $('cancel-edit'),
   filterSport: $('filter-sport'), filterStatus: $('filter-status'),
   list: $('admin-list'), toast: $('toast')
@@ -73,7 +74,7 @@ function refreshCat2() {
   el.wrapCat2.style.display = '';
 }
 
-el.sport.addEventListener('change', () => { refreshCat1(); refreshCat2(); });
+el.sport.addEventListener('change', () => { refreshCat1(); refreshCat2(); refreshScoreVisibility(); });
 el.cat1.addEventListener('change', refreshCat2);
 
 /* Read the category path from the form, validating completeness. */
@@ -92,13 +93,41 @@ function readPath() {
 
 /* ---- Status / score toggle -------------------------------- */
 function refreshScoreVisibility() {
-  el.wrapScores.style.display = el.status.value === 'final' ? '' : 'none';
-  el.lblScoreA.textContent = getTeam(el.teamA.value) ? getTeam(el.teamA.value).name : 'A';
-  el.lblScoreB.textContent = getTeam(el.teamB.value) ? getTeam(el.teamB.value).name : 'B';
+  const isFinal = el.status.value === 'final';
+  const vb = isSetSport(el.sport.value);
+  el.wrapScores.style.display = (isFinal && !vb) ? '' : 'none';
+  el.wrapSets.style.display = (isFinal && vb) ? '' : 'none';
+
+  const nameA = getTeam(el.teamA.value) ? getTeam(el.teamA.value).name : 'A';
+  const nameB = getTeam(el.teamB.value) ? getTeam(el.teamB.value).name : 'B';
+  el.lblScoreA.textContent = nameA;
+  el.lblScoreB.textContent = nameB;
+  el.setTeamA.textContent = nameA;
+  el.setTeamB.textContent = nameB;
 }
 el.status.addEventListener('change', refreshScoreVisibility);
 el.teamA.addEventListener('change', refreshScoreVisibility);
 el.teamB.addEventListener('change', refreshScoreVisibility);
+
+/* Read fully-filled sets from the form as [[aPts, bPts], ...]. */
+function readSets() {
+  const sets = [];
+  for (let i = 1; i <= 3; i++) {
+    const a = $('set-a-' + i).value;
+    const b = $('set-b-' + i).value;
+    if (a !== '' && b !== '') sets.push([Number(a), Number(b)]);
+  }
+  return sets;
+}
+
+/* Fill the set inputs from a sets array. */
+function fillSets(sets) {
+  for (let i = 1; i <= 3; i++) {
+    const s = (sets || [])[i - 1];
+    $('set-a-' + i).value = (s && s[0] != null) ? s[0] : '';
+    $('set-b-' + i).value = (s && s[1] != null) ? s[1] : '';
+  }
+}
 
 /* ---- Submit (add or edit) --------------------------------- */
 el.form.addEventListener('submit', async e => {
@@ -112,12 +141,25 @@ el.form.addEventListener('submit', async e => {
   if (!el.date.value) return toast('Please set a date.');
 
   const status = el.status.value;
-  let scoreA = null, scoreB = null;
+  const vb = isSetSport(el.sport.value);
+  let scoreA = null, scoreB = null, sets = null;
+
   if (status === 'final') {
-    if (el.scoreA.value === '' || el.scoreB.value === '')
-      return toast('Enter both scores for a final game.');
-    scoreA = Number(el.scoreA.value);
-    scoreB = Number(el.scoreB.value);
+    if (vb) {
+      sets = readSets();
+      if (!sets.length) return toast('Enter the set scores.');
+      const w = setsWon(sets);
+      if (Math.max(w.a, w.b) < 2)
+        return toast('One team must win 2 sets (best of 3).');
+      if (w.a === w.b) return toast('A best of 3 cannot end level on sets.');
+      scoreA = w.a;
+      scoreB = w.b;
+    } else {
+      if (el.scoreA.value === '' || el.scoreB.value === '')
+        return toast('Enter both scores for a final game.');
+      scoreA = Number(el.scoreA.value);
+      scoreB = Number(el.scoreB.value);
+    }
   }
 
   const data = {
@@ -131,6 +173,7 @@ el.form.addEventListener('submit', async e => {
     stage: el.stage.value,
     status, scoreA, scoreB
   };
+  if (vb) data.sets = sets || [];
 
   try {
     if (el.editId.value) {
@@ -174,6 +217,7 @@ function editGame(id) {
   el.status.value = m.status;
   el.scoreA.value = m.scoreA == null ? '' : m.scoreA;
   el.scoreB.value = m.scoreB == null ? '' : m.scoreB;
+  fillSets(m.sets);
   refreshScoreVisibility();
 
   el.formTitle.textContent = 'Edit Game';
@@ -233,7 +277,13 @@ function renderList() {
     const tA = getTeam(m.teamA), tB = getTeam(m.teamB);
     const w = winnerOf(m);
     const isFinal = m.status === 'final';
-    const score = isFinal ? ` &nbsp; <strong>${esc(m.scoreA)} &ndash; ${esc(m.scoreB)}</strong>` : '';
+    const vb = isSetSport(m.sportId);
+    const brk = vb ? setsBreakdown(m) : '';
+    const scoreText = isFinal
+      ? (vb ? `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)} sets${brk ? ' (' + esc(brk) + ')' : ''}`
+            : `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)}`)
+      : '';
+    const score = isFinal ? ` &nbsp; <strong>${scoreText}</strong>` : '';
     const badge = isFinal
       ? `<span class="badge final">Final</span>`
       : `<span class="badge scheduled">Scheduled</span>`;
@@ -244,15 +294,22 @@ function renderList() {
       ? `<span class="badge stage-rr">Round Robin</span>`
       : `<span class="badge stage-final">${esc(getStage(stageId).name)}</span>`;
 
-    const quick = !isFinal ? `
-      <div class="score-edit">
-        <span class="lbl">${esc(tA ? tA.name : 'A')}</span>
-        <input type="number" min="0" id="qa-${m.id}" />
-        <span class="lbl">&ndash;</span>
-        <input type="number" min="0" id="qb-${m.id}" />
-        <span class="lbl">${esc(tB ? tB.name : 'B')}</span>
-        <button class="btn btn-primary btn-sm" data-quick="${m.id}">Record result</button>
-      </div>` : '';
+    // Volleyball needs per-set entry, so it uses the full Edit form instead
+    // of the inline single-score quick editor.
+    const quick = !isFinal
+      ? (vb
+        ? `<div class="score-edit">
+             <button class="btn btn-primary btn-sm" data-vbrecord="${m.id}">Enter set scores</button>
+           </div>`
+        : `<div class="score-edit">
+             <span class="lbl">${esc(tA ? tA.name : 'A')}</span>
+             <input type="number" min="0" id="qa-${m.id}" />
+             <span class="lbl">&ndash;</span>
+             <input type="number" min="0" id="qb-${m.id}" />
+             <span class="lbl">${esc(tB ? tB.name : 'B')}</span>
+             <button class="btn btn-primary btn-sm" data-quick="${m.id}">Record result</button>
+           </div>`)
+      : '';
 
     return `
       <div class="adm-match">
@@ -282,6 +339,11 @@ function renderList() {
   el.list.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteGame(b.dataset.del));
   el.list.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => saveQuickScore(b.dataset.quick));
   el.list.querySelectorAll('[data-reopen]').forEach(b => b.onclick = () => reopenGame(b.dataset.reopen));
+  el.list.querySelectorAll('[data-vbrecord]').forEach(b => b.onclick = () => {
+    editGame(b.dataset.vbrecord);
+    el.status.value = 'final';
+    refreshScoreVisibility();
+  });
 }
 
 el.filterSport.addEventListener('change', renderList);

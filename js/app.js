@@ -154,6 +154,10 @@ function scoreboardRow(m) {
   const stageId = stageOf(m);
   const stageTag = stageId !== 'round-robin'
     ? `<span class="sb-stage">${esc(getStage(stageId).name)}</span>` : '';
+  const vb = isSetSport(m.sportId);
+  const brk = vb ? setsBreakdown(m) : '';
+  const foot = (w ? esc(getTeam(w).name) + ' won' : 'Draw')
+    + (vb ? ` &bull; sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' (' + esc(brk) + ')' : ''}` : '');
   return `
     <button class="scoreboard-card" data-open-match
         data-sport="${m.sportId}" data-path="${(m.path || []).join('|')}">
@@ -164,7 +168,7 @@ function scoreboardRow(m) {
       ${stageTag}
       ${side(m.teamA, tA, m.scoreA)}
       ${side(m.teamB, tB, m.scoreB)}
-      <div class="sb-foot">${w ? esc(getTeam(w).name) + ' won' : 'Draw'}</div>
+      <div class="sb-foot">${foot}</div>
     </button>`;
 }
 
@@ -312,6 +316,12 @@ function roundRobinHtml(sport) {
   const anyPlayed = table.some(r => r.played > 0);
   if (!anyPlayed) return '';
 
+  const vb = isSetSport(sport.id);
+  const forHdr = vb ? 'SF' : 'PF';
+  const agstHdr = vb ? 'SA' : 'PA';
+  const forTitle = vb ? 'Sets For (total sets won)' : 'Points For (total scored)';
+  const agstTitle = vb ? 'Sets Against (total sets lost)' : 'Points Against (total allowed)';
+
   return `
     <h3 class="sub-title">Round Robin Standings <span class="seed-hint">(seeding for the finals)</span></h3>
     <div class="table-wrap">
@@ -319,8 +329,8 @@ function roundRobinHtml(sport) {
         <thead>
           <tr>
             <th>Seed</th><th>Team</th><th>W</th><th>L</th>
-            <th title="Points For (total scored)">PF</th>
-            <th title="Points Against (total allowed)">PA</th>
+            <th title="${forTitle}">${forHdr}</th>
+            <th title="${agstTitle}">${agstHdr}</th>
             <th>Diff</th>
           </tr>
         </thead>
@@ -372,10 +382,14 @@ function matchRow(m) {
     ? `<span class="badge stage-rr">Round Robin</span>`
     : `<span class="badge stage-final">${esc(getStage(stageId).name)}</span>`;
 
+  const vb = isSetSport(m.sportId);
+  const brk = (isFinal && vb) ? setsBreakdown(m) : '';
+
   let winnerLine = '';
   if (isFinal) {
+    const setNote = vb ? ` <span class="sets-note">(sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' &bull; ' + esc(brk) : ''})</span>` : '';
     winnerLine = w
-      ? `<div class="winner-line">Winner: <strong>${esc(getTeam(w).name)}</strong></div>`
+      ? `<div class="winner-line">Winner: <strong>${esc(getTeam(w).name)}</strong>${setNote}</div>`
       : `<div class="winner-line">Result: <strong>Draw</strong></div>`;
   }
 
