@@ -156,7 +156,7 @@ el.form.addEventListener('submit', async e => {
       scoreB = w.b;
     } else {
       if (el.scoreA.value === '' || el.scoreB.value === '')
-        return toast('Enter both scores for a final game.');
+        return toast('Enter both scores.');
       scoreA = Number(el.scoreA.value);
       scoreB = Number(el.scoreB.value);
     }
@@ -304,7 +304,7 @@ function renderList() {
       : '';
     const score = isFinal ? ` &nbsp; <strong>${scoreText}</strong>` : '';
     const badge = isFinal
-      ? `<span class="badge final">Final</span>`
+      ? `<span class="badge final">Played</span>`
       : `<span class="badge scheduled">Scheduled</span>`;
     const winTag = (isFinal && w) ? ` <span class="badge win-tag">${esc(getTeam(w).name)} won</span>`
       : (isFinal && !w) ? ` <span class="badge">Draw</span>` : '';

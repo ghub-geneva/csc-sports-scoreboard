@@ -407,7 +407,7 @@ function matchRow(m) {
       </div>
       <div class="match-badges">
         ${stageBadge}
-        <span class="badge ${isFinal ? 'final' : 'scheduled'}">${isFinal ? 'Final' : 'Scheduled'}</span>
+        <span class="badge ${isFinal ? 'final' : 'scheduled'}">${isFinal ? 'Played' : 'Scheduled'}</span>
       </div>
       ${winnerLine}
     </div>`;
