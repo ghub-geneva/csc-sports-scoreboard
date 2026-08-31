@@ -97,9 +97,6 @@ function renderHome() {
     <div class="empty">
       <div class="big">🏆</div>
       <div>No results yet.</div>
-      <div style="margin-top:6px;font-size:.85rem;">
-        Sport scores and special event placements show up here as soon as they are recorded from the Admin page.
-      </div>
     </div>`}`;
 
   const tiles = SPORTS.map(s => {
