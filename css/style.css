@@ -115,11 +115,13 @@ a { color: var(--blue); }
 
 .section-title {
   font-size: 1.16rem;
-  margin: 0 0 14px;
+  margin: 34px 0 14px;
   display: flex;
   align-items: center;
   gap: 9px;
 }
+/* No extra gap above the very first heading on a page. */
+#app > .section-title:first-child { margin-top: 0; }
 .section-title .bar {
   width: 5px; height: 20px; border-radius: 3px;
   background: linear-gradient(var(--red), var(--gold));
