@@ -15,11 +15,37 @@
         <h1>Scoreboard Admin</h1>
         <p>Add schedules, set match-ups, and record results</p>
       </div>
+      <span id="admin-user-box" class="admin-user-box" style="display:none">
+        <span id="admin-user"></span>
+        <button id="logout-btn" class="nav-link" type="button">Log out</button>
+      </span>
       <a class="nav-link" href="index.html">&#128065; View Scoreboard</a>
     </div>
   </header>
 
   <main class="container">
+
+    <!-- Login gate -->
+    <section class="panel login-panel" id="login-gate" style="display:none">
+      <h2>Admin Login</h2>
+      <p class="hint">Sign in to add schedules and record results. Viewing the scoreboard needs no login.</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </div>
+        <div id="login-error" class="login-error"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="login-btn">Log in</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="admin-content" style="display:none">
 
     <!-- Add / edit game -->
     <section class="panel">
@@ -153,7 +179,7 @@
     <!-- Data tools -->
     <section class="panel">
       <h2>Data</h2>
-      <p class="hint">Games and special events are saved in this browser. Export a backup, import it on another device, or clear everything.</p>
+      <p class="hint">Scores are saved to the shared Supabase database. Export a backup file, import one, or clear everything.</p>
       <div class="form-actions">
         <button class="btn btn-ghost" id="export-btn">Export backup (.json)</button>
         <button class="btn btn-ghost" id="import-btn">Import backup</button>
@@ -162,11 +188,14 @@
       </div>
     </section>
 
+    </div><!-- /admin-content -->
+
   </main>
 
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
+  <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/admin.js"></script>
 </body>

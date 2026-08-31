@@ -101,7 +101,7 @@ el.teamA.addEventListener('change', refreshScoreVisibility);
 el.teamB.addEventListener('change', refreshScoreVisibility);
 
 /* ---- Submit (add or edit) --------------------------------- */
-el.form.addEventListener('submit', e => {
+el.form.addEventListener('submit', async e => {
   e.preventDefault();
 
   if (!el.sport.value) return toast('Please choose a sport.');
@@ -132,15 +132,17 @@ el.form.addEventListener('submit', e => {
     status, scoreA, scoreB
   };
 
-  if (el.editId.value) {
-    Store.update(el.editId.value, data);
-    toast('Game updated.');
-  } else {
-    Store.add(data);
-    toast('Game added.');
-  }
-  resetForm();
-  renderList();
+  try {
+    if (el.editId.value) {
+      await Store.update(el.editId.value, data);
+      toast('Game updated.');
+    } else {
+      await Store.add(data);
+      toast('Game added.');
+    }
+    resetForm();
+    renderList();
+  } catch (err) { handleWriteError(err); }
 });
 
 function resetForm() {
@@ -181,26 +183,32 @@ function editGame(id) {
 }
 
 /* ---- Quick "record result" from the list ------------------ */
-function saveQuickScore(id) {
+async function saveQuickScore(id) {
   const a = $('qa-' + id).value;
   const b = $('qb-' + id).value;
   if (a === '' || b === '') return toast('Enter both scores.');
-  Store.update(id, { status: 'final', scoreA: Number(a), scoreB: Number(b) });
-  toast('Result recorded.');
-  renderList();
+  try {
+    await Store.update(id, { status: 'final', scoreA: Number(a), scoreB: Number(b) });
+    toast('Result recorded.');
+    renderList();
+  } catch (err) { handleWriteError(err); }
 }
 
-function reopenGame(id) {
-  Store.update(id, { status: 'scheduled', scoreA: null, scoreB: null });
-  toast('Moved back to scheduled.');
-  renderList();
+async function reopenGame(id) {
+  try {
+    await Store.update(id, { status: 'scheduled', scoreA: null, scoreB: null });
+    toast('Moved back to scheduled.');
+    renderList();
+  } catch (err) { handleWriteError(err); }
 }
 
-function deleteGame(id) {
+async function deleteGame(id) {
   if (!confirm('Delete this game? This cannot be undone.')) return;
-  Store.remove(id);
-  toast('Game deleted.');
-  renderList();
+  try {
+    await Store.remove(id);
+    toast('Game deleted.');
+    renderList();
+  } catch (err) { handleWriteError(err); }
 }
 
 /* ---- Render the admin list -------------------------------- */
@@ -297,34 +305,39 @@ $('import-file').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
+    let matches, events;
     try {
       const data = JSON.parse(reader.result);
       // Support the current {matches, events} format and the legacy array-only backup.
-      const matches = Array.isArray(data) ? data : (data.matches || []);
-      const events = Array.isArray(data) ? [] : (data.events || []);
+      matches = Array.isArray(data) ? data : (data.matches || []);
+      events = Array.isArray(data) ? [] : (data.events || []);
       if (!Array.isArray(matches)) throw new Error('bad format');
-      if (!confirm('Import ' + matches.length + ' games and ' + events.length + ' special events? This replaces current data.')) return;
-      Store.saveAll(matches);
-      EventStore.saveAll(events);
+    } catch (err) {
+      return toast('Could not read that file.');
+    }
+    if (!confirm('Import ' + matches.length + ' games and ' + events.length + ' special events? This replaces ALL current data.')) return;
+    try {
+      await Store.replaceAll(matches);
+      await EventStore.replaceAll(events);
       toast('Data imported.');
       renderList();
       renderEventList();
-    } catch (err) {
-      toast('Could not read that file.');
-    }
+    } catch (err) { handleWriteError(err); }
   };
   reader.readAsText(file);
   e.target.value = '';
 });
 
-$('clear-btn').addEventListener('click', () => {
+$('clear-btn').addEventListener('click', async () => {
   if (!confirm('Delete ALL games and special events permanently?')) return;
-  Store.saveAll([]);
-  EventStore.saveAll([]);
-  toast('All data cleared.');
-  renderList();
-  renderEventList();
+  try {
+    await Store.replaceAll([]);
+    await EventStore.replaceAll([]);
+    toast('All data cleared.');
+    renderList();
+    renderEventList();
+  } catch (err) { handleWriteError(err); }
 });
 
 /* =============================================================
@@ -376,7 +389,7 @@ function readPlaces() {
   return { places, dup };
 }
 
-ev.form.addEventListener('submit', e => {
+ev.form.addEventListener('submit', async e => {
   e.preventDefault();
   if (!ev.event.value) return toast('Please choose an event.');
   const { places, dup } = readPlaces();
@@ -390,15 +403,17 @@ ev.form.addEventListener('submit', e => {
     places
   };
 
-  if (ev.editId.value) {
-    EventStore.update(ev.editId.value, data);
-    toast('Event result updated.');
-  } else {
-    EventStore.add(data);
-    toast('Event result saved.');
-  }
-  resetEventForm();
-  renderEventList();
+  try {
+    if (ev.editId.value) {
+      await EventStore.update(ev.editId.value, data);
+      toast('Event result updated.');
+    } else {
+      await EventStore.add(data);
+      toast('Event result saved.');
+    }
+    resetEventForm();
+    renderEventList();
+  } catch (err) { handleWriteError(err); }
 });
 
 function resetEventForm() {
@@ -425,11 +440,13 @@ function editEvent(id) {
   ev.form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function deleteEvent(id) {
+async function deleteEvent(id) {
   if (!confirm('Delete this event result?')) return;
-  EventStore.remove(id);
-  toast('Event result deleted.');
-  renderEventList();
+  try {
+    await EventStore.remove(id);
+    toast('Event result deleted.');
+    renderEventList();
+  } catch (err) { handleWriteError(err); }
 }
 
 function renderEventList() {
@@ -466,9 +483,73 @@ function renderEventList() {
   ev.list.querySelectorAll('[data-ev-del]').forEach(b => b.onclick = () => deleteEvent(b.dataset.evDel));
 }
 
-/* ---- Init ------------------------------------------------- */
-refreshCat1();
-refreshScoreVisibility();
-renderList();
-buildPlaceRows({});
-renderEventList();
+/* =============================================================
+   Auth gate - the admin UI is hidden until login succeeds.
+   ============================================================= */
+function handleWriteError(err) {
+  const msg = String(err && err.message || err);
+  // Session lost / not authorized: send back to the login screen.
+  if (/jwt|token|unauthor|401|permission|rls|row-level|policy/i.test(msg)) {
+    toast('Please log in again.');
+    showLogin();
+  } else {
+    toast('Save failed: ' + msg);
+  }
+}
+
+function showLogin() {
+  $('login-gate').style.display = '';
+  $('admin-content').style.display = 'none';
+  $('admin-user-box').style.display = 'none';
+}
+
+async function showAdmin() {
+  $('login-gate').style.display = 'none';
+  $('admin-content').style.display = '';
+  $('admin-user-box').style.display = '';
+  $('admin-user').textContent = Auth.email() || '';
+
+  refreshCat1();
+  refreshScoreVisibility();
+  buildPlaceRows({});
+  try {
+    await DataSync.loadAll();
+    renderList();
+    renderEventList();
+  } catch (err) {
+    toast('Could not load data: ' + (err.message || err));
+  }
+}
+
+$('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  const password = $('login-password').value;
+  const btn = $('login-btn');
+  const errEl = $('login-error');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    await Auth.signIn(email, password);
+    $('login-form').reset();
+    await showAdmin();
+  } catch (err) {
+    errEl.textContent = err.message || 'Login failed';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Log in';
+  }
+});
+
+$('logout-btn').addEventListener('click', async () => {
+  await Auth.signOut();
+  showLogin();
+});
+
+/* Decide the initial screen: refresh a stored session if present. */
+(async () => {
+  if (Auth.load() && await Auth.refresh()) {
+    await showAdmin();
+  } else {
+    showLogin();
+  }
+})();

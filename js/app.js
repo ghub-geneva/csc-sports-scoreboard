@@ -403,7 +403,52 @@ function emptyState(tab) {
     </div>`;
 }
 
-/* Re-render if another tab (admin) changes storage. */
-window.addEventListener('storage', render);
+/* ---- Bootstrap: load from Supabase, then live-refresh ----- */
+let lastHash = '';
+function dataHash() {
+  return JSON.stringify(Store.getAll()) + '|' + JSON.stringify(EventStore.getAll());
+}
 
-render();
+function loadingState() {
+  app.innerHTML = `
+    <div class="empty">
+      <div class="big">⏳</div>
+      <div>Loading scoreboard...</div>
+    </div>`;
+}
+
+async function boot() {
+  loadingState();
+  try {
+    await DataSync.loadAll();
+    lastHash = dataHash();
+    render();
+  } catch (e) {
+    app.innerHTML = `
+      <div class="empty">
+        <div class="big">⚠️</div>
+        <div>Could not load the scoreboard.</div>
+        <div style="margin-top:6px;font-size:.85rem;">${esc(String(e && e.message || e))}</div>
+      </div>`;
+  }
+}
+
+// Poll every 8s so phones stay in sync; only re-render when data changes.
+setInterval(async () => {
+  try {
+    await DataSync.loadAll();
+    const h = dataHash();
+    if (h !== lastHash) { lastHash = h; render(); }
+  } catch (e) { /* keep showing last good data */ }
+}, 8000);
+
+// Refresh immediately when the tab regains focus.
+window.addEventListener('focus', async () => {
+  try {
+    await DataSync.loadAll();
+    const h = dataHash();
+    if (h !== lastHash) { lastHash = h; render(); }
+  } catch (e) { /* ignore */ }
+});
+
+boot();

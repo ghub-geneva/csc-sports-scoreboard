@@ -122,45 +122,143 @@ function categoryLabel(sportId, path) {
      status:'scheduled'|'final', scoreA, scoreB
    }
    ============================================================= */
-const Store = (function () {
-  const KEY = 'csc_scoreboard_matches_v1';
+/* ---- Supabase auth session (admin login) ------------------ */
+const Auth = {
+  _session: null,
+  load() {
+    try { this._session = JSON.parse(localStorage.getItem('csc_sb_session') || 'null'); }
+    catch (e) { this._session = null; }
+    return this._session;
+  },
+  save(s) { this._session = s; localStorage.setItem('csc_sb_session', JSON.stringify(s)); },
+  clear() { this._session = null; localStorage.removeItem('csc_sb_session'); },
+  token() { return this._session && this._session.access_token; },
+  email() { return this._session && this._session.user && this._session.user.email; },
 
-  function getAll() {
+  async signIn(email, password) {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Login failed');
+    this.save(data);
+    return data;
+  },
+  async refresh() {
+    if (!this._session || !this._session.refresh_token) return false;
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: this._session.refresh_token })
+    });
+    if (!res.ok) { this.clear(); return false; }
+    this.save(await res.json());
+    return true;
+  },
+  async signOut() {
     try {
-      const raw = localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
+      await fetch(SUPABASE_URL + '/auth/v1/logout', {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + this.token() }
+      });
+    } catch (e) { /* best effort */ }
+    this.clear();
+  }
+};
+Auth.load();
+
+/* ---- Low-level REST helper (PostgREST) -------------------- */
+async function sbErr(res) {
+  try { const j = await res.json(); return j.message || j.error || JSON.stringify(j); }
+  catch (e) { return res.status + ' ' + res.statusText; }
+}
+const SB = {
+  async rest(path, opts, retry) {
+    opts = opts || {};
+    if (retry === undefined) retry = true;
+    const headers = Object.assign({
+      apikey: SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }, opts.headers || {});
+    const token = Auth.token();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, opts, { headers }));
+    // Token expired mid-session: refresh once and retry.
+    if (res.status === 401 && retry && Auth._session && Auth._session.refresh_token) {
+      if (await Auth.refresh()) return SB.rest(path, opts, false);
     }
+    return res;
   }
+};
 
-  function saveAll(list) {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  }
+/* ---- Matches store (Supabase-backed, in-memory cache) ------
+   Each row is { id, data } where data is the full match object.
+   getAll() reads the cache synchronously; writes hit Supabase. */
+const Store = {
+  _cache: [],
+  getAll() { return this._cache; },
 
-  function add(match) {
-    const list = getAll();
+  async load() {
+    const res = await SB.rest('matches?select=data');
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache = (await res.json()).map(r => r.data);
+    return this._cache;
+  },
+
+  async add(match) {
     match.id = 'm_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    list.push(match);
-    saveAll(list);
+    const res = await SB.rest('matches', {
+      method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ id: match.id, data: match })
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache.push(match);
     return match;
-  }
+  },
 
-  function update(id, patch) {
-    const list = getAll();
-    const idx = list.findIndex(m => m.id === id);
+  async update(id, patch) {
+    const idx = this._cache.findIndex(m => m.id === id);
     if (idx === -1) return null;
-    list[idx] = Object.assign({}, list[idx], patch);
-    saveAll(list);
-    return list[idx];
-  }
+    const updated = Object.assign({}, this._cache[idx], patch, { id });
+    const res = await SB.rest('matches?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ data: updated })
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache[idx] = updated;
+    return updated;
+  },
 
-  function remove(id) {
-    saveAll(getAll().filter(m => m.id !== id));
-  }
+  async remove(id) {
+    const res = await SB.rest('matches?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE', headers: { Prefer: 'return=minimal' }
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache = this._cache.filter(m => m.id !== id);
+  },
 
-  return { getAll, saveAll, add, update, remove };
-})();
+  async replaceAll(list) {
+    let res = await SB.rest('matches?id=not.is.null', {
+      method: 'DELETE', headers: { Prefer: 'return=minimal' }
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    if (list.length) {
+      const rows = list.map(m => {
+        m.id = m.id || ('m_' + Date.now() + '_' + Math.floor(Math.random() * 1e6));
+        return { id: m.id, data: m };
+      });
+      res = await SB.rest('matches', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(rows)
+      });
+      if (!res.ok) throw new Error(await sbErr(res));
+    }
+    this._cache = list.slice();
+  }
+};
 
 /* =============================================================
    Special (non-sport) events - Muse & Banner Raising.
@@ -182,37 +280,73 @@ function placeLabel(place) {
 
 /* Storage for special-event results.
    A record: { id, eventId, date, note, places: { teamId: place } } */
-const EventStore = (function () {
-  const KEY = 'csc_scoreboard_events_v1';
+const EventStore = {
+  _cache: [],
+  getAll() { return this._cache; },
 
-  function getAll() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-  function saveAll(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
-  function add(ev) {
-    const list = getAll();
+  async load() {
+    const res = await SB.rest('events?select=data');
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache = (await res.json()).map(r => r.data);
+    return this._cache;
+  },
+
+  async add(ev) {
     ev.id = 'e_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    list.push(ev);
-    saveAll(list);
+    const res = await SB.rest('events', {
+      method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ id: ev.id, data: ev })
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache.push(ev);
     return ev;
-  }
-  function update(id, patch) {
-    const list = getAll();
-    const idx = list.findIndex(e => e.id === id);
-    if (idx === -1) return null;
-    list[idx] = Object.assign({}, list[idx], patch);
-    saveAll(list);
-    return list[idx];
-  }
-  function remove(id) { saveAll(getAll().filter(e => e.id !== id)); }
+  },
 
-  return { getAll, saveAll, add, update, remove };
-})();
+  async update(id, patch) {
+    const idx = this._cache.findIndex(e => e.id === id);
+    if (idx === -1) return null;
+    const updated = Object.assign({}, this._cache[idx], patch, { id });
+    const res = await SB.rest('events?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ data: updated })
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache[idx] = updated;
+    return updated;
+  },
+
+  async remove(id) {
+    const res = await SB.rest('events?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE', headers: { Prefer: 'return=minimal' }
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    this._cache = this._cache.filter(e => e.id !== id);
+  },
+
+  async replaceAll(list) {
+    let res = await SB.rest('events?id=not.is.null', {
+      method: 'DELETE', headers: { Prefer: 'return=minimal' }
+    });
+    if (!res.ok) throw new Error(await sbErr(res));
+    if (list.length) {
+      const rows = list.map(e => {
+        e.id = e.id || ('e_' + Date.now() + '_' + Math.floor(Math.random() * 1e6));
+        return { id: e.id, data: e };
+      });
+      res = await SB.rest('events', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(rows)
+      });
+      if (!res.ok) throw new Error(await sbErr(res));
+    }
+    this._cache = list.slice();
+  }
+};
+
+/* Load both stores from Supabase into their caches. */
+const DataSync = {
+  loadAll() { return Promise.all([Store.load(), EventStore.load()]); }
+};
 
 /* Same sport + identical path. */
 function samePath(a, b) {

@@ -654,6 +654,26 @@ a { color: var(--blue); }
   padding: 30px 20px 44px;
 }
 
+/* ---- Admin login ------------------------------------------ */
+.login-panel { max-width: 420px; margin: 40px auto; }
+.login-panel .field { margin-bottom: 14px; }
+.login-error {
+  color: var(--red);
+  font-size: .85rem;
+  font-weight: 600;
+  min-height: 1.1em;
+  margin-bottom: 8px;
+}
+.admin-user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: .84rem;
+  font-weight: 600;
+}
+.admin-user-box #admin-user { opacity: .92; }
+
 /* ---- Responsive ------------------------------------------- */
 @media (max-width: 640px) {
   .header-titles h1 { font-size: 1.12rem; }
