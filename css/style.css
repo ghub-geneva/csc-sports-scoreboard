@@ -615,6 +615,31 @@ a { color: var(--blue); }
 }
 .sets-note { color: var(--muted); font-weight: 600; }
 
+/* inline per-set quick editor in the admin list */
+.quick-sets { margin-top: 10px; max-width: 320px; display: flex; flex-direction: column; gap: 6px; }
+.qs-head, .qs-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.qs-head span {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.qs-head span:first-child { text-align: left; }
+.qs-row input {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+  width: 100%;
+}
+.quick-sets .btn { margin-top: 4px; align-self: flex-start; }
+
 /* placement rows in the special-events form */
 .ev-place-row {
   display: flex;

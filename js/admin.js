@@ -238,6 +238,25 @@ async function saveQuickScore(id) {
   } catch (err) { handleWriteError(err); }
 }
 
+// Record a volleyball result from the inline per-set inputs.
+async function saveQuickSets(id) {
+  const sets = [];
+  for (let i = 1; i <= 3; i++) {
+    const a = $('qs-a-' + id + '-' + i).value;
+    const b = $('qs-b-' + id + '-' + i).value;
+    if (a !== '' && b !== '') sets.push([Number(a), Number(b)]);
+  }
+  if (!sets.length) return toast('Enter the set scores.');
+  const wsets = setsWon(sets);
+  if (Math.max(wsets.a, wsets.b) < 2) return toast('One team must win 2 sets (best of 3).');
+  if (wsets.a === wsets.b) return toast('A best of 3 cannot end level on sets.');
+  try {
+    await Store.update(id, { status: 'final', scoreA: wsets.a, scoreB: wsets.b, sets });
+    toast('Result recorded.');
+    renderList();
+  } catch (err) { handleWriteError(err); }
+}
+
 async function reopenGame(id) {
   try {
     await Store.update(id, { status: 'scheduled', scoreA: null, scoreB: null });
@@ -294,12 +313,22 @@ function renderList() {
       ? `<span class="badge stage-rr">Round Robin</span>`
       : `<span class="badge stage-final">${esc(getStage(stageId).name)}</span>`;
 
-    // Volleyball needs per-set entry, so it uses the full Edit form instead
-    // of the inline single-score quick editor.
+    // Volleyball records per-set points inline; other sports use a single score.
     const quick = !isFinal
       ? (vb
-        ? `<div class="score-edit">
-             <button class="btn btn-primary btn-sm" data-vbrecord="${m.id}">Enter set scores</button>
+        ? `<div class="quick-sets">
+             <div class="qs-head">
+               <span></span>
+               <span>${esc(tA ? tA.name : 'A')}</span>
+               <span>${esc(tB ? tB.name : 'B')}</span>
+             </div>
+             ${[1, 2, 3].map(i => `
+               <div class="qs-row">
+                 <span class="set-lbl">Set ${i}</span>
+                 <input type="number" min="0" id="qs-a-${m.id}-${i}" />
+                 <input type="number" min="0" id="qs-b-${m.id}-${i}" />
+               </div>`).join('')}
+             <button class="btn btn-primary btn-sm" data-qsets="${m.id}">Record result</button>
            </div>`
         : `<div class="score-edit">
              <span class="lbl">${esc(tA ? tA.name : 'A')}</span>
@@ -338,12 +367,8 @@ function renderList() {
   el.list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editGame(b.dataset.edit));
   el.list.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteGame(b.dataset.del));
   el.list.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => saveQuickScore(b.dataset.quick));
+  el.list.querySelectorAll('[data-qsets]').forEach(b => b.onclick = () => saveQuickSets(b.dataset.qsets));
   el.list.querySelectorAll('[data-reopen]').forEach(b => b.onclick = () => reopenGame(b.dataset.reopen));
-  el.list.querySelectorAll('[data-vbrecord]').forEach(b => b.onclick = () => {
-    editGame(b.dataset.vbrecord);
-    el.status.value = 'final';
-    refreshScoreVisibility();
-  });
 }
 
 el.filterSport.addEventListener('change', renderList);
