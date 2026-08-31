@@ -70,13 +70,6 @@ function renderHome() {
           <div class="wins">${r.points}</div>
           <div class="sub">points &bull; ${r.wins} win${r.wins === 1 ? '' : 's'}</div>
         </div>`).join('')}
-    </div>
-    <div class="points-note">
-      <strong>Scoring per event:</strong>
-      <span class="pts-pill">1st = 10 pts</span>
-      <span class="pts-pill">2nd = 7 pts</span>
-      <span class="pts-pill">3rd = 5 pts</span>
-      <span class="pts-pill">4th = 3 pts</span>
     </div>`;
 
   // Scoreboard: unified latest results - sport finals plus special events.

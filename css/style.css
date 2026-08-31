@@ -220,6 +220,11 @@ a { color: var(--blue); }
   color: #6b5600;
 }
 .points-note strong { color: #4a3b00; }
+.footer .points-note {
+  margin: 0 auto 16px;
+  max-width: 620px;
+  justify-content: center;
+}
 .pts-pill {
   background: #fff;
   border: 1px solid #ecd98a;
