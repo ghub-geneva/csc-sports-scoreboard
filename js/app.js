@@ -5,11 +5,19 @@
 
 const app = document.getElementById('app');
 
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
 /* Navigation state */
 let state = {
-  sportId: null,   // null = home
-  path: [],        // category ids drilled into
-  tab: 'upcoming'  // 'upcoming' | 'results'
+  sportId: null,          // null = home
+  path: [],               // category ids drilled into
+  tab: 'upcoming',        // 'upcoming' | 'results'
+  scheduleDate: todayStr()// day shown in the home "Games Schedule" section
 };
 
 function esc(s) {
@@ -115,6 +123,7 @@ function renderHome() {
 
   app.innerHTML = `
     ${standHtml}
+    ${scheduleHtml()}
     ${scoreboardHtml}
     <h2 class="section-title"><span class="bar"></span> Sports</h2>
     <div class="grid">${tiles}</div>`;
@@ -127,16 +136,86 @@ function renderHome() {
       render();
     }));
 
-  // A scoreboard row jumps to that game's sport / category, Results tab.
+  // A scoreboard/schedule row jumps to that game's sport / category.
   app.querySelectorAll('[data-open-match]').forEach(card =>
     card.addEventListener('click', () => {
       const sportId = card.dataset.sport;
       const path = card.dataset.path ? card.dataset.path.split('|') : [];
       state.sportId = sportId;
       state.path = path;
-      state.tab = 'results';
+      state.tab = card.dataset.tab || 'results';
       render();
     }));
+
+  // Games Schedule date controls.
+  const sd = document.getElementById('sched-date');
+  if (sd) sd.addEventListener('change', () => {
+    state.scheduleDate = sd.value || todayStr();
+    render();
+  });
+  const st = document.getElementById('sched-today');
+  if (st) st.addEventListener('click', () => {
+    state.scheduleDate = todayStr();
+    render();
+  });
+}
+
+// Home "Games Schedule" - all games on the selected day, across all sports.
+function scheduleHtml() {
+  const day = state.scheduleDate;
+  const games = Store.getAll().filter(m => m.date === day).sort(byDateTime);
+  const isToday = day === todayStr();
+
+  const body = games.length
+    ? `<div class="sched-list">${games.map(scheduleRow).join('')}</div>`
+    : `<div class="empty">
+         <div class="big">📅</div>
+         <div>No games scheduled for ${esc(fmtDate(day))}.</div>
+       </div>`;
+
+  return `
+    <h2 class="section-title">
+      <span class="bar"></span> Games Schedule${isToday ? ' <span class="seed-hint">(today)</span>' : ''}
+    </h2>
+    <div class="sched-controls">
+      <input type="date" id="sched-date" value="${day}" />
+      <button id="sched-today" class="btn btn-ghost btn-sm">Today</button>
+      <span class="sched-count">${games.length} game${games.length === 1 ? '' : 's'} on ${esc(fmtDate(day))}</span>
+    </div>
+    ${body}`;
+}
+
+function schedDot(id) {
+  const t = getTeam(id);
+  return t
+    ? `<span class="team-dot" style="background:${t.color}"></span> ${esc(t.name)}`
+    : '?';
+}
+
+// One row in the home Games Schedule list.
+function scheduleRow(m) {
+  const sport = getSport(m.sportId);
+  const cat = categoryLabel(m.sportId, m.path);
+  const isFinal = m.status === 'final';
+  const w = winnerOf(m);
+  const vb = isSetSport(m.sportId);
+
+  const right = isFinal
+    ? `<span class="badge final">Played</span>
+       <span class="sched-score">${esc(m.scoreA)} - ${esc(m.scoreB)}${vb ? ' sets' : ''}</span>`
+    : `<span class="badge scheduled">Scheduled</span>`;
+
+  return `
+    <button class="sched-row" data-open-match
+        data-sport="${m.sportId}" data-path="${(m.path || []).join('|')}"
+        data-tab="${isFinal ? 'results' : 'upcoming'}">
+      <span class="sched-time">${m.time ? fmtTime(m.time) : 'TBA'}</span>
+      <span class="sched-main">
+        <span class="sched-sport">${sport ? sport.emoji : ''} ${esc(sport ? sport.name : '')}${cat ? ' &bull; ' + esc(cat) : ''}</span>
+        <span class="sched-teams">${schedDot(m.teamA)} <span class="vs">vs</span> ${schedDot(m.teamB)}${m.venue ? ' &bull; ' + esc(m.venue) : ''}</span>
+      </span>
+      <span class="sched-right">${right}</span>
+    </button>`;
 }
 
 // One compact score line for the home-page scoreboard.
