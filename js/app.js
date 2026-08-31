@@ -317,7 +317,12 @@ function roundRobinHtml(sport) {
     <div class="table-wrap">
       <table class="rr-table">
         <thead>
-          <tr><th>Seed</th><th>Team</th><th>W</th><th>L</th><th>Diff</th></tr>
+          <tr>
+            <th>Seed</th><th>Team</th><th>W</th><th>L</th>
+            <th title="Points For (total scored)">PF</th>
+            <th title="Points Against (total allowed)">PA</th>
+            <th>Diff</th>
+          </tr>
         </thead>
         <tbody>
           ${table.map((r, i) => `
@@ -326,6 +331,8 @@ function roundRobinHtml(sport) {
               <td><span class="team-dot" style="background:${r.team.color}"></span> ${esc(r.team.name)}</td>
               <td>${r.w}</td>
               <td>${r.l}</td>
+              <td>${r.pf}</td>
+              <td>${r.pa}</td>
               <td>${r.diff > 0 ? '+' : ''}${r.diff}</td>
             </tr>`).join('')}
         </tbody>
