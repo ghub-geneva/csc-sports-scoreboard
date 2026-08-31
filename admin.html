@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSC Scoreboard - Admin</title>
+  <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header admin-bar">
+    <div class="header-inner">
+      <img class="header-logo" src="img/csc-logo.png" alt="Civil Service Commission" />
+      <div class="header-titles">
+        <h1>Scoreboard Admin</h1>
+        <p>Add schedules, set match-ups, and record results</p>
+      </div>
+      <a class="nav-link" href="index.html">&#128065; View Scoreboard</a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Add / edit game -->
+    <section class="panel">
+      <h2 id="form-title">Add a Game</h2>
+      <p class="hint">Pick the sport and category, set the two teams, then schedule it. You can add the score now or later.</p>
+      <form id="game-form">
+        <input type="hidden" id="edit-id" />
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-sport">Sport</label>
+            <select id="f-sport" required></select>
+          </div>
+          <div class="field" id="wrap-cat1" style="display:none">
+            <label id="lbl-cat1" for="f-cat1">Category</label>
+            <select id="f-cat1"></select>
+          </div>
+          <div class="field" id="wrap-cat2" style="display:none">
+            <label id="lbl-cat2" for="f-cat2">Division</label>
+            <select id="f-cat2"></select>
+          </div>
+
+          <div class="field">
+            <label for="f-teamA">Team A</label>
+            <select id="f-teamA" required></select>
+          </div>
+          <div class="field">
+            <label for="f-teamB">Team B</label>
+            <select id="f-teamB" required></select>
+          </div>
+
+          <div class="field">
+            <label for="f-date">Date</label>
+            <input type="date" id="f-date" required />
+          </div>
+          <div class="field">
+            <label for="f-time">Time</label>
+            <input type="time" id="f-time" />
+          </div>
+          <div class="field full">
+            <label for="f-venue">Venue</label>
+            <input type="text" id="f-venue" placeholder="e.g. Cordova Sports Complex, Court 1" />
+          </div>
+
+          <div class="field">
+            <label for="f-stage">Stage</label>
+            <select id="f-stage">
+              <option value="round-robin">Round Robin</option>
+              <option value="championship">Championship (1st vs 2nd)</option>
+              <option value="battle-3rd">Battle for 3rd (3rd vs 4th)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-status">Status</label>
+            <select id="f-status">
+              <option value="scheduled">Scheduled (upcoming)</option>
+              <option value="final">Final (record result)</option>
+            </select>
+          </div>
+          <div class="field" id="wrap-scores" style="display:none">
+            <label>Final score</label>
+            <div class="score-edit">
+              <span class="lbl" id="lbl-scoreA">A</span>
+              <input type="number" id="f-scoreA" min="0" />
+              <span class="lbl">&ndash;</span>
+              <input type="number" id="f-scoreB" min="0" />
+              <span class="lbl" id="lbl-scoreB">B</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submit-btn">Add Game</button>
+          <button type="button" class="btn btn-ghost" id="cancel-edit" style="display:none">Cancel edit</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Manage games -->
+    <section class="panel">
+      <h2>Scheduled &amp; Past Games</h2>
+      <div class="admin-filter">
+        <div class="field">
+          <label for="filter-sport">Filter by sport</label>
+          <select id="filter-sport"><option value="">All sports</option></select>
+        </div>
+        <div class="field">
+          <label for="filter-status">Filter by status</label>
+          <select id="filter-status">
+            <option value="">All</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="final">Final</option>
+          </select>
+        </div>
+      </div>
+      <div id="admin-list"></div>
+    </section>
+
+    <!-- Special events scoring (Muse & Banner Raising) -->
+    <section class="panel">
+      <h2 id="ev-form-title">Special Events Scoring</h2>
+      <p class="hint">Muse and Banner Raising are scored by placement, not by match.
+        Give each team a rank: 1st = 10 pts, 2nd = 7 pts, 3rd = 5 pts, 4th = 3 pts.</p>
+      <form id="event-form">
+        <input type="hidden" id="ev-edit-id" />
+        <div class="form-grid">
+          <div class="field">
+            <label for="ev-event">Event</label>
+            <select id="ev-event" required></select>
+          </div>
+          <div class="field">
+            <label for="ev-date">Date</label>
+            <input type="date" id="ev-date" />
+          </div>
+          <div class="field full">
+            <label>Placements</label>
+            <div id="ev-places"></div>
+          </div>
+          <div class="field full">
+            <label for="ev-note">Note (optional)</label>
+            <input type="text" id="ev-note" placeholder="e.g. Held at the Municipal Gym" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="ev-submit-btn">Save Event Result</button>
+          <button type="button" class="btn btn-ghost" id="ev-cancel-edit" style="display:none">Cancel edit</button>
+        </div>
+      </form>
+      <div id="event-list" style="margin-top:18px"></div>
+    </section>
+
+    <!-- Data tools -->
+    <section class="panel">
+      <h2>Data</h2>
+      <p class="hint">Games and special events are saved in this browser. Export a backup, import it on another device, or clear everything.</p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="export-btn">Export backup (.json)</button>
+        <button class="btn btn-ghost" id="import-btn">Import backup</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none" />
+        <button class="btn btn-red" id="clear-btn">Clear all games</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
