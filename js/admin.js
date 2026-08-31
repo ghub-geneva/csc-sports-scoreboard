@@ -433,9 +433,16 @@ $('clear-btn').addEventListener('click', async () => {
 const ev = {
   form: $('event-form'), editId: $('ev-edit-id'), title: $('ev-form-title'),
   event: $('ev-event'), date: $('ev-date'), note: $('ev-note'),
+  gameTitle: $('ev-title'), wrapTitle: $('wrap-ev-title'),
   places: $('ev-places'), submit: $('ev-submit-btn'), cancel: $('ev-cancel-edit'),
   list: $('event-list')
 };
+
+// Show the title input only for events that need a custom name (Pinoy Games).
+function refreshEventTitle() {
+  ev.wrapTitle.style.display = eventNeedsTitle(ev.event.value) ? '' : 'none';
+}
+ev.event.addEventListener('change', refreshEventTitle);
 
 // Event dropdown.
 ev.event.innerHTML = '<option value="">Select event</option>' +
@@ -479,12 +486,16 @@ function readPlaces() {
 ev.form.addEventListener('submit', async e => {
   e.preventDefault();
   if (!ev.event.value) return toast('Please choose an event.');
+  const needsTitle = eventNeedsTitle(ev.event.value);
+  const gameTitle = ev.gameTitle.value.trim();
+  if (needsTitle && !gameTitle) return toast('Please enter the Pinoy Game title.');
   const { places, dup } = readPlaces();
   if (Object.keys(places).length === 0) return toast('Set at least one placement.');
   if (dup) return toast('Each placement (1st to 4th) can be used only once.');
 
   const data = {
     eventId: ev.event.value,
+    title: needsTitle ? gameTitle : '',
     date: ev.date.value,
     note: ev.note.value.trim(),
     places
@@ -510,6 +521,7 @@ function resetEventForm() {
   ev.submit.textContent = 'Save Event Result';
   ev.cancel.style.display = 'none';
   buildPlaceRows({});
+  refreshEventTitle();
 }
 ev.cancel.addEventListener('click', resetEventForm);
 
@@ -518,6 +530,8 @@ function editEvent(id) {
   if (!rec) return;
   ev.editId.value = rec.id;
   ev.event.value = rec.eventId;
+  ev.gameTitle.value = rec.title || '';
+  refreshEventTitle();
   ev.date.value = rec.date || '';
   ev.note.value = rec.note || '';
   buildPlaceRows(rec.places || {});
@@ -552,10 +566,11 @@ function renderEventList() {
     const line = ranked.map(x =>
       `${teamDot(x.team.id)} ${esc(x.team.name)} <strong>${placeLabel(x.place)}</strong> (+${pointsForPlace(x.place)})`
     ).join(' &nbsp; ');
+    const evName = (event ? event.name : rec.eventId) + (rec.title ? ': ' + rec.title : '');
     return `
       <div class="adm-match">
         <div>
-          <div class="cat">${event ? event.emoji : ''} ${esc(event ? event.name : rec.eventId)}</div>
+          <div class="cat">${event ? event.emoji : ''} ${esc(evName)}</div>
           <div style="margin-top:4px">${line || 'No placements'}</div>
           <div class="meta">${rec.date ? esc(rec.date) : 'No date'}${rec.note ? ' &bull; ' + esc(rec.note) : ''}</div>
         </div>

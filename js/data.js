@@ -269,8 +269,15 @@ const PLACEMENT_POINTS = { 1: 10, 2: 7, 3: 5, 4: 3 };
 
 const SPECIAL_EVENTS = [
   { id: 'muse',           name: 'Muse',           emoji: '👑' },
-  { id: 'banner-raising', name: 'Banner Raising', emoji: '🚩' }
+  { id: 'banner-raising', name: 'Banner Raising', emoji: '🚩' },
+  { id: 'pinoy-games',    name: 'Pinoy Games',    emoji: '🎪', titled: true }
 ];
+
+/* Events flagged `titled` need a custom name typed per entry (e.g. Tug of War). */
+function eventNeedsTitle(id) {
+  const e = getEvent(id);
+  return !!(e && e.titled);
+}
 
 function getEvent(id) { return SPECIAL_EVENTS.find(e => e.id === id) || null; }
 function pointsForPlace(place) { return PLACEMENT_POINTS[place] || 0; }

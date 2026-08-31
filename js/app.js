@@ -192,10 +192,11 @@ function eventCard(ev) {
       <span class="ev-pts">+${pointsForPlace(x.place)}</span>
     </div>`).join('') : `<div class="ev-row"><span class="ev-name">No placements set</span></div>`;
 
+  const evName = (event ? event.name : ev.eventId) + (ev.title ? ': ' + ev.title : '');
   return `
     <div class="scoreboard-card" style="cursor:default;border-top-color:var(--gold)">
       <div class="sb-head">
-        <span>${event ? event.emoji : ''} ${esc(event ? event.name : ev.eventId)}</span>
+        <span>${event ? event.emoji : ''} ${esc(evName)}</span>
         <span class="sb-date">${ev.date ? fmtDate(ev.date) : ''}</span>
       </div>
       ${rows}
