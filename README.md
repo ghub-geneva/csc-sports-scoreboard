@@ -33,6 +33,15 @@ Muse, Banner Raising, and Pinoy Games (each Pinoy Game has its own title) are sc
 - Admin login: Supabase email/password auth, gated on `admin.html`.
 - Config: `js/config.js` holds the Supabase URL and publishable key (safe in the browser; protected by row-level security).
 
+## Deploying updates
+
+GitHub Pages redeploys automatically on every push to `main`. To make sure viewers get the new CSS/JS immediately (no hard refresh), deploy with the helper script, which bumps a `?v=` cache-busting version on the asset links before pushing:
+
+- PowerShell: `.\deploy.ps1 "commit message"`
+- Bash: `./deploy.sh "commit message"`
+
+Plain `git push` still works, but browsers may serve cached CSS/JS for up to ~10 minutes.
+
 ## Files
 
 - `index.html` - public scoreboard and schedule viewer
