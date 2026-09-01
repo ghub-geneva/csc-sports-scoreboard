@@ -799,6 +799,37 @@ a { color: var(--blue); }
 .doc-body ul, .doc-body ol { margin: 0 0 10px; padding-left: 20px; }
 .doc-body li { margin-bottom: 4px; }
 
+/* ---- Workflow --------------------------------------------- */
+.wf-phase { margin-bottom: 22px; }
+.wf-phase:last-child { margin-bottom: 0; }
+.wf-title {
+  font-size: .96rem;
+  margin: 0 0 12px;
+  color: var(--blue);
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+.wf-steps { display: flex; flex-direction: column; gap: 10px; }
+.wf-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.wf-num {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 800;
+  font-size: .82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ---- Changelog -------------------------------------------- */
 .changelog { display: flex; flex-direction: column; gap: 16px; }
 .cl-entry {

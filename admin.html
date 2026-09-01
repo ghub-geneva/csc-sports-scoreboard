@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260901050529" />
+  <link rel="stylesheet" href="css/style.css?v=20260901052551" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -51,6 +51,7 @@
         <button class="side-link active" data-view="games" type="button">🏆 Games</button>
         <button class="side-link" data-view="events" type="button">👑 Special Events</button>
         <button class="side-link" data-view="data" type="button">💾 Data</button>
+        <button class="side-link" data-view="workflow" type="button">🧭 Workflow</button>
         <button class="side-link" data-view="docs" type="button">📖 Documentation</button>
         <button class="side-link" data-view="changelog" type="button">🕑 Changelog</button>
       </nav>
@@ -232,6 +233,54 @@
     </section>
     </div><!-- /data view -->
 
+    <div class="admin-view" data-view="workflow" hidden>
+    <!-- Workflow -->
+    <section class="panel">
+      <h2>Workflow</h2>
+      <p class="hint">The order of operations for running the sportsfest, start to finish.</p>
+
+      <div class="wf-phase">
+        <h3 class="wf-title">1. Before the games</h3>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-num">1</span><div>Log in to this Admin page.</div></div>
+          <div class="wf-step"><span class="wf-num">2</span><div>For each sport and category, add all <strong>Round Robin</strong> games (every team plays each other once, so 6 games per group). Set the date, time, and venue, and leave the status as <strong>Scheduled</strong>.</div></div>
+        </div>
+      </div>
+
+      <div class="wf-phase">
+        <h3 class="wf-title">2. As each game is played</h3>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-num">3</span><div>Open <strong>Games</strong>, find the match, and use <strong>Record result</strong> on its card. For Volleyball and Badminton, enter the score for each set (best of 3).</div></div>
+          <div class="wf-step"><span class="wf-num">4</span><div>The public scoreboard, standings, and schedule update on their own within seconds. No need to refresh anything.</div></div>
+        </div>
+      </div>
+
+      <div class="wf-phase">
+        <h3 class="wf-title">3. After a category's round robin</h3>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-num">5</span><div>Open that category on the scoreboard to read the <strong>Round Robin Standings</strong>. This seeds the teams 1st to 4th.</div></div>
+          <div class="wf-step"><span class="wf-num">6</span><div>Add the <strong>Championship</strong> game (seed 1 vs seed 2) and the <strong>Battle for 3rd</strong> game (seed 3 vs seed 4), using the correct Stage.</div></div>
+          <div class="wf-step"><span class="wf-num">7</span><div>Record those two results. Placement points (10 / 7 / 5 / 3) are added to the Overall Standings automatically.</div></div>
+        </div>
+      </div>
+
+      <div class="wf-phase">
+        <h3 class="wf-title">4. Special events</h3>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-num">8</span><div>In <strong>Special Events</strong>, record placements for Muse, Banner Raising, and each Pinoy Game (give each Pinoy Game a title). Same 10 / 7 / 5 / 3 points.</div></div>
+        </div>
+      </div>
+
+      <div class="wf-phase">
+        <h3 class="wf-title">5. Housekeeping</h3>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-num">9</span><div>From time to time, open <strong>Data</strong> and <strong>Export backup</strong> to save a copy of everything.</div></div>
+          <div class="wf-step"><span class="wf-num">10</span><div>Use <strong>Reopen</strong> on a game if you need to correct a result, then record it again.</div></div>
+        </div>
+      </div>
+    </section>
+    </div><!-- /workflow view -->
+
     <div class="admin-view" data-view="docs" hidden>
     <!-- Documentation -->
     <section class="panel">
@@ -351,8 +400,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260901050529"></script>
-  <script src="js/data.js?v=20260901050529"></script>
-  <script src="js/admin.js?v=20260901050529"></script>
+  <script src="js/config.js?v=20260901052551"></script>
+  <script src="js/data.js?v=20260901052551"></script>
+  <script src="js/admin.js?v=20260901052551"></script>
 </body>
 </html>
