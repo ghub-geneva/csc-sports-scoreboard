@@ -767,6 +767,53 @@ a { color: var(--blue); }
   padding: 30px 20px 44px;
 }
 
+/* ---- Documentation (collapsible) -------------------------- */
+.doc {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: #fbfcfe;
+}
+.doc > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 700;
+  color: var(--blue);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.doc > summary::-webkit-details-marker { display: none; }
+.doc > summary::before {
+  content: "▸";
+  font-size: .85rem;
+  transition: transform .15s;
+}
+.doc[open] > summary::before { transform: rotate(90deg); }
+.doc[open] > summary { border-bottom: 1px solid var(--line); background: #fff; }
+.doc-body { padding: 12px 18px 16px; font-size: .9rem; color: var(--ink); }
+.doc-body p { margin: 0 0 10px; }
+.doc-body p:last-child { margin-bottom: 0; }
+.doc-body ul, .doc-body ol { margin: 0 0 10px; padding-left: 20px; }
+.doc-body li { margin-bottom: 4px; }
+
+/* ---- Changelog -------------------------------------------- */
+.changelog { display: flex; flex-direction: column; gap: 16px; }
+.cl-entry {
+  border-left: 3px solid var(--gold);
+  padding-left: 14px;
+}
+.cl-date {
+  font-weight: 800;
+  color: var(--ink);
+  font-size: .9rem;
+  margin-bottom: 6px;
+}
+.cl-entry ul { margin: 0; padding-left: 18px; }
+.cl-entry li { font-size: .88rem; color: var(--muted); margin-bottom: 4px; }
+
 /* ---- Admin login ------------------------------------------ */
 .login-panel { max-width: 420px; margin: 40px auto; }
 .login-panel .field { margin-bottom: 14px; }

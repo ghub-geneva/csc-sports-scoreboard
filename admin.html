@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260901045011" />
+  <link rel="stylesheet" href="css/style.css?v=20260901050020" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -217,6 +217,112 @@
       </div>
     </section>
 
+    <!-- Documentation -->
+    <section class="panel">
+      <h2>Documentation</h2>
+      <p class="hint">A quick guide to running the scoreboard. Click a topic to expand it.</p>
+
+      <details class="doc">
+        <summary>Getting started</summary>
+        <div class="doc-body">
+          <p>Anyone can view the scoreboard at <strong>csc126.cordova.gov.ph</strong> without logging in. Only this Admin page can change data, and it requires the admin email and password.</p>
+          <p>Scores are saved to a shared online database, so every phone and screen sees the same thing. The public page refreshes on its own every few seconds.</p>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Adding a game</summary>
+        <div class="doc-body">
+          <ol>
+            <li>Pick the <strong>Sport</strong>. If it has categories (Badminton, Table Tennis, Pickleball), choose them.</li>
+            <li>Choose <strong>Team A</strong> and <strong>Team B</strong> (they must be different).</li>
+            <li>Set the <strong>Date</strong>, and optionally the <strong>Time</strong> and <strong>Venue</strong>.</li>
+            <li>Choose the <strong>Stage</strong> (see below).</li>
+            <li>Leave <strong>Status</strong> as <em>Scheduled</em> for an upcoming game, or set it to <em>Played</em> to record the score now.</li>
+            <li>Click <strong>Add Game</strong>.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Round robin and the finals (Stage)</summary>
+        <div class="doc-body">
+          <p>Each sport category is a <strong>single round robin</strong>: every team plays each other once. Enter those games with stage <strong>Round Robin</strong>. Their results build a standings table that seeds the teams 1st to 4th (ties are broken by point difference, or set difference for set sports).</p>
+          <p>After the round robin, add two more games:</p>
+          <ul>
+            <li><strong>Championship</strong> - 1st seed vs 2nd seed. Winner is 1st place, loser is 2nd.</li>
+            <li><strong>Battle for 3rd</strong> - 3rd seed vs 4th seed. Winner is 3rd place, loser is 4th.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Recording results</summary>
+        <div class="doc-body">
+          <p>For a scheduled game, use the <strong>Record result</strong> box on its card in "Scheduled &amp; Past Games", or click <strong>Edit</strong> and set Status to Played.</p>
+          <p><strong>Volleyball and Badminton</strong> are best of 3 sets: enter each set's points (Set 1, 2, 3). Leave Set 3 blank for a 2-0. The winner is whoever takes 2 sets.</p>
+          <p>Use <strong>Reopen</strong> to move a played game back to scheduled.</p>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Scoring and standings</summary>
+        <div class="doc-body">
+          <p>Overall Standings are ranked by <strong>total points</strong>. Points come from final placement in each event:</p>
+          <ul>
+            <li>1st = 10 pts, 2nd = 7 pts, 3rd = 5 pts, 4th = 3 pts</li>
+          </ul>
+          <p>For a sport, the Championship winner gets 10 and the runner-up 7; the Battle for 3rd winner gets 5 and the loser 3.</p>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Special events (Muse, Banner Raising, Pinoy Games)</summary>
+        <div class="doc-body">
+          <p>These are scored by placement, not by match. In <strong>Special Events Scoring</strong>, pick the event, give each team a rank (1st to 4th), and save. The same 10/7/5/3 points apply.</p>
+          <p>For <strong>Pinoy Games</strong>, type a title (e.g. Tug of War) for each game. You can add as many titled Pinoy Games as you like.</p>
+        </div>
+      </details>
+
+      <details class="doc">
+        <summary>Backups and clearing data</summary>
+        <div class="doc-body">
+          <p>Under <strong>Data</strong>: <strong>Export backup</strong> downloads a file with all games and events. <strong>Import backup</strong> restores from such a file (this replaces current data). <strong>Clear all</strong> deletes everything permanently. Export a backup before clearing.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- Changelog -->
+    <section class="panel">
+      <h2>Changelog</h2>
+      <p class="hint">History of updates to the scoreboard.</p>
+
+      <div class="changelog">
+        <div class="cl-entry">
+          <div class="cl-date">2026-09-01</div>
+          <ul>
+            <li>Added this Documentation and Changelog.</li>
+            <li>Cache-busting so updates appear without a manual refresh.</li>
+            <li>Home schedule now auto-shows the nearest day with games.</li>
+            <li>Badminton scored by sets (best of 3), like Volleyball.</li>
+            <li>Optimized logos and cleaned up unused files.</li>
+          </ul>
+        </div>
+        <div class="cl-entry">
+          <div class="cl-date">2026-08-31</div>
+          <ul>
+            <li>Pinoy Games special event with custom titles.</li>
+            <li>Volleyball recorded per set (best of 3).</li>
+            <li>Round robin plus Championship and Battle for 3rd, with placement points feeding the standings.</li>
+            <li>Special events: Muse and Banner Raising.</li>
+            <li>Moved to a shared Supabase database with a password-protected admin.</li>
+            <li>Published to GitHub Pages at csc126.cordova.gov.ph.</li>
+            <li>First version: sports, categories, schedules, results, and standings.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     </div><!-- /admin-content -->
 
   </main>
@@ -224,8 +330,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260901045011"></script>
-  <script src="js/data.js?v=20260901045011"></script>
-  <script src="js/admin.js?v=20260901045011"></script>
+  <script src="js/config.js?v=20260901050020"></script>
+  <script src="js/data.js?v=20260901050020"></script>
+  <script src="js/admin.js?v=20260901050020"></script>
 </body>
 </html>
