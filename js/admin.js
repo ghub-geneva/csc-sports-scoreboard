@@ -647,6 +647,19 @@ $('logout-btn').addEventListener('click', async () => {
   showLogin();
 });
 
+/* Sidebar navigation: show the chosen view, hide the others. */
+function showView(view) {
+  document.querySelectorAll('.side-link').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.admin-view').forEach(v =>
+    v.hidden = (v.dataset.view !== view));
+}
+document.querySelectorAll('.side-link').forEach(b =>
+  b.addEventListener('click', () => {
+    showView(b.dataset.view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+
 /* Decide the initial screen: refresh a stored session if present. */
 (async () => {
   if (Auth.load() && await Auth.refresh()) {

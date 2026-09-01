@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260901050020" />
+  <link rel="stylesheet" href="css/style.css?v=20260901050529" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -46,7 +46,17 @@
     </section>
 
     <div id="admin-content" style="display:none">
+    <div class="admin-layout">
+      <nav class="admin-sidebar" id="admin-nav">
+        <button class="side-link active" data-view="games" type="button">🏆 Games</button>
+        <button class="side-link" data-view="events" type="button">👑 Special Events</button>
+        <button class="side-link" data-view="data" type="button">💾 Data</button>
+        <button class="side-link" data-view="docs" type="button">📖 Documentation</button>
+        <button class="side-link" data-view="changelog" type="button">🕑 Changelog</button>
+      </nav>
+      <div class="admin-main">
 
+    <div class="admin-view" data-view="games">
     <!-- Add / edit game -->
     <section class="panel">
       <h2 id="form-title">Add a Game</h2>
@@ -167,7 +177,9 @@
       </div>
       <div id="admin-list"></div>
     </section>
+    </div><!-- /games view -->
 
+    <div class="admin-view" data-view="events" hidden>
     <!-- Special events scoring (Muse & Banner Raising) -->
     <section class="panel">
       <h2 id="ev-form-title">Special Events Scoring</h2>
@@ -204,7 +216,9 @@
       </form>
       <div id="event-list" style="margin-top:18px"></div>
     </section>
+    </div><!-- /events view -->
 
+    <div class="admin-view" data-view="data" hidden>
     <!-- Data tools -->
     <section class="panel">
       <h2>Data</h2>
@@ -216,7 +230,9 @@
         <button class="btn btn-red" id="clear-btn">Clear all games</button>
       </div>
     </section>
+    </div><!-- /data view -->
 
+    <div class="admin-view" data-view="docs" hidden>
     <!-- Documentation -->
     <section class="panel">
       <h2>Documentation</h2>
@@ -291,7 +307,9 @@
         </div>
       </details>
     </section>
+    </div><!-- /docs view -->
 
+    <div class="admin-view" data-view="changelog" hidden>
     <!-- Changelog -->
     <section class="panel">
       <h2>Changelog</h2>
@@ -322,7 +340,10 @@
         </div>
       </div>
     </section>
+    </div><!-- /changelog view -->
 
+      </div><!-- /admin-main -->
+    </div><!-- /admin-layout -->
     </div><!-- /admin-content -->
 
   </main>
@@ -330,8 +351,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260901050020"></script>
-  <script src="js/data.js?v=20260901050020"></script>
-  <script src="js/admin.js?v=20260901050020"></script>
+  <script src="js/config.js?v=20260901050529"></script>
+  <script src="js/data.js?v=20260901050529"></script>
+  <script src="js/admin.js?v=20260901050529"></script>
 </body>
 </html>

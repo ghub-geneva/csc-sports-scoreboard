@@ -814,6 +814,53 @@ a { color: var(--blue); }
 .cl-entry ul { margin: 0; padding-left: 18px; }
 .cl-entry li { font-size: .88rem; color: var(--muted); margin-bottom: 4px; }
 
+/* ---- Admin sidebar layout --------------------------------- */
+.admin-layout { display: flex; gap: 22px; align-items: flex-start; }
+.admin-sidebar {
+  flex: 0 0 200px;
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+.side-link {
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: background .12s, color .12s;
+}
+.side-link:hover { background: #eef2fb; }
+.side-link.active { background: var(--blue); color: #fff; }
+.admin-main { flex: 1; min-width: 0; }
+.admin-main .panel:first-child { margin-top: 0; }
+.admin-view[hidden] { display: none; }
+
+@media (max-width: 760px) {
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .side-link { flex: 1 1 auto; justify-content: center; }
+}
+
 /* ---- Admin login ------------------------------------------ */
 .login-panel { max-width: 420px; margin: 40px auto; }
 .login-panel .field { margin-bottom: 14px; }
