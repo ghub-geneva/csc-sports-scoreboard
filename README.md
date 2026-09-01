@@ -11,7 +11,7 @@ Royal Blue, Red, Yellow, Green.
 - Basketball
 - Volleyball (best of 3 sets)
 - Badminton (best of 3 sets): Singles (Men), Mixed Doubles
-- Table Tennis: Singles (Men), Singles (Women)
+- Table Tennis (best of 3 sets): Singles (Men), Singles (Women)
 - Pickleball: Beginner, Novice, Intermediate, each with Doubles Men, Doubles Women, Mixed Doubles
 
 ## Format and scoring

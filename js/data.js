@@ -380,9 +380,11 @@ function loserOf(m) {
   return w === m.teamA ? m.teamB : m.teamA;
 }
 
-/* ---- Set-based sports (Volleyball & Badminton, best of 3) -- */
+/* ---- Set-based sports (Volleyball, Badminton, Table Tennis) -- */
 function isSetSport(sportId) {
-  return sportId === 'volleyball' || sportId === 'badminton';
+  return sportId === 'volleyball' ||
+         sportId === 'badminton' ||
+         sportId === 'table-tennis';
 }
 
 /* Count sets won per side from a sets array [[aPts,bPts], ...]. */
