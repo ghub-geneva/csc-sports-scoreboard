@@ -380,8 +380,10 @@ function loserOf(m) {
   return w === m.teamA ? m.teamB : m.teamA;
 }
 
-/* ---- Set-based sports (Volleyball, best of 3) ------------- */
-function isSetSport(sportId) { return sportId === 'volleyball'; }
+/* ---- Set-based sports (Volleyball & Badminton, best of 3) -- */
+function isSetSport(sportId) {
+  return sportId === 'volleyball' || sportId === 'badminton';
+}
 
 /* Count sets won per side from a sets array [[aPts,bPts], ...]. */
 function setsWon(sets) {
