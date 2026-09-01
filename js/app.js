@@ -14,11 +14,24 @@ function todayStr() {
 
 /* Navigation state */
 let state = {
-  sportId: null,          // null = home
-  path: [],               // category ids drilled into
-  tab: 'upcoming',        // 'upcoming' | 'results'
-  scheduleDate: todayStr()// day shown in the home "Games Schedule" section
+  sportId: null,           // null = home
+  path: [],                // category ids drilled into
+  tab: 'upcoming',         // 'upcoming' | 'results'
+  scheduleDate: todayStr(),// day shown in the home "Games Schedule" section
+  scheduleAuto: true       // true = auto-pick the nearest day with games
 };
+
+/* Nearest date that has games: today if it has any, else the soonest
+   upcoming day, else the most recent past day. */
+function nearestGameDate() {
+  const dates = [...new Set(Store.getAll().map(m => m.date).filter(Boolean))].sort();
+  if (!dates.length) return todayStr();
+  const today = todayStr();
+  if (dates.indexOf(today) !== -1) return today;
+  const upcoming = dates.filter(d => d > today);
+  if (upcoming.length) return upcoming[0];
+  return dates[dates.length - 1];
+}
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -137,24 +150,33 @@ function renderHome() {
       render();
     }));
 
-  // Games Schedule date controls.
+  // Games Schedule date controls. Picking a date pins it (turns off auto).
   const sd = document.getElementById('sched-date');
   if (sd) sd.addEventListener('change', () => {
     state.scheduleDate = sd.value || todayStr();
+    state.scheduleAuto = false;
     render();
   });
   const st = document.getElementById('sched-today');
   if (st) st.addEventListener('click', () => {
     state.scheduleDate = todayStr();
+    state.scheduleAuto = false;
     render();
   });
 }
 
 // Home "Games Schedule" - all games on the selected day, across all sports.
+// In auto mode the day is the nearest date that actually has games.
 function scheduleHtml() {
+  if (state.scheduleAuto) state.scheduleDate = nearestGameDate();
   const day = state.scheduleDate;
   const games = Store.getAll().filter(m => m.date === day).sort(byDateTime);
-  const isToday = day === todayStr();
+  const today = todayStr();
+
+  let label = '';
+  if (day === today) label = ' <span class="seed-hint">(today)</span>';
+  else if (day > today) label = ' <span class="seed-hint">(next game day)</span>';
+  else label = ' <span class="seed-hint">(latest game day)</span>';
 
   const body = games.length
     ? `<div class="sched-list">${games.map(scheduleRow).join('')}</div>`
@@ -165,7 +187,7 @@ function scheduleHtml() {
 
   return `
     <h2 class="section-title">
-      <span class="bar"></span> Games Schedule${isToday ? ' <span class="seed-hint">(today)</span>' : ''}
+      <span class="bar"></span> Games Schedule${label}
     </h2>
     <div class="sched-controls">
       <input type="date" id="sched-date" value="${day}" />
