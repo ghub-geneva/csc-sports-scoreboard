@@ -433,14 +433,21 @@ $('clear-btn').addEventListener('click', async () => {
 const ev = {
   form: $('event-form'), editId: $('ev-edit-id'), title: $('ev-form-title'),
   event: $('ev-event'), date: $('ev-date'), note: $('ev-note'),
-  gameTitle: $('ev-title'), wrapTitle: $('wrap-ev-title'),
+  gameTitle: $('ev-title'), wrapTitle: $('wrap-ev-title'), titleLabel: $('ev-title-label'),
   places: $('ev-places'), submit: $('ev-submit-btn'), cancel: $('ev-cancel-edit'),
   list: $('event-list')
 };
 
-// Show the title input only for events that need a custom name (Pinoy Games).
+// Show the title input only for events that need one, with a label/placeholder
+// tailored to the event (Pinoy Games, Attendance, ...).
 function refreshEventTitle() {
-  ev.wrapTitle.style.display = eventNeedsTitle(ev.event.value) ? '' : 'none';
+  const e = getEvent(ev.event.value);
+  const need = !!(e && e.titled);
+  ev.wrapTitle.style.display = need ? '' : 'none';
+  if (need) {
+    ev.titleLabel.textContent = e.titleLabel || 'Title';
+    ev.gameTitle.placeholder = e.titlePlaceholder || '';
+  }
 }
 ev.event.addEventListener('change', refreshEventTitle);
 
@@ -488,7 +495,10 @@ ev.form.addEventListener('submit', async e => {
   if (!ev.event.value) return toast('Please choose an event.');
   const needsTitle = eventNeedsTitle(ev.event.value);
   const gameTitle = ev.gameTitle.value.trim();
-  if (needsTitle && !gameTitle) return toast('Please enter the Pinoy Game title.');
+  if (needsTitle && !gameTitle) {
+    const lbl = (getEvent(ev.event.value).titleLabel || 'title').toLowerCase();
+    return toast('Please enter the ' + lbl + '.');
+  }
   const { places, dup } = readPlaces();
   if (Object.keys(places).length === 0) return toast('Set at least one placement.');
   if (dup) return toast('Each placement (1st to 4th) can be used only once.');

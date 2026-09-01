@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260901071258" />
+  <link rel="stylesheet" href="css/style.css?v=20260901072339" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -198,8 +198,8 @@
             <input type="date" id="ev-date" />
           </div>
           <div class="field full" id="wrap-ev-title" style="display:none">
-            <label for="ev-title">Pinoy Game title</label>
-            <input type="text" id="ev-title" placeholder="e.g. Tug of War, Sack Race, Palo Sebo" />
+            <label id="ev-title-label" for="ev-title">Title</label>
+            <input type="text" id="ev-title" placeholder="" />
           </div>
           <div class="field full">
             <label>Placements</label>
@@ -342,10 +342,10 @@
       </details>
 
       <details class="doc">
-        <summary>Special events (Muse, Banner Raising, Pinoy Games)</summary>
+        <summary>Special events (Muse, Banner Raising, Pinoy Games, Attendance)</summary>
         <div class="doc-body">
           <p>These are scored by placement, not by match. In <strong>Special Events Scoring</strong>, pick the event, give each team a rank (1st to 4th), and save. The same 10/7/5/3 points apply.</p>
-          <p>For <strong>Pinoy Games</strong>, type a title (e.g. Tug of War) for each game. You can add as many titled Pinoy Games as you like.</p>
+          <p>For <strong>Pinoy Games</strong> and <strong>Attendance</strong>, type a title for each entry (e.g. Tug of War, or Opening Ceremony). You can add as many titled entries as you like.</p>
         </div>
       </details>
 
@@ -368,6 +368,7 @@
         <div class="cl-entry">
           <div class="cl-date">2026-09-01</div>
           <ul>
+            <li>Added Attendance as a titled special event (like Pinoy Games).</li>
             <li>Table Tennis scored by sets (best of 3), like Volleyball and Badminton.</li>
             <li>Renamed the site to "LGU Cordova Sportsfest".</li>
             <li>Admin sidebar navigation: Games, Special Events, Data, Workflow, Documentation, Changelog.</li>
@@ -405,8 +406,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260901071258"></script>
-  <script src="js/data.js?v=20260901071258"></script>
-  <script src="js/admin.js?v=20260901071258"></script>
+  <script src="js/config.js?v=20260901072339"></script>
+  <script src="js/data.js?v=20260901072339"></script>
+  <script src="js/admin.js?v=20260901072339"></script>
 </body>
 </html>

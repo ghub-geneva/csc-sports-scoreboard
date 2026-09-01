@@ -270,7 +270,10 @@ const PLACEMENT_POINTS = { 1: 10, 2: 7, 3: 5, 4: 3 };
 const SPECIAL_EVENTS = [
   { id: 'muse',           name: 'Muse',           emoji: '👑' },
   { id: 'banner-raising', name: 'Banner Raising', emoji: '🚩' },
-  { id: 'pinoy-games',    name: 'Pinoy Games',    emoji: '🎪', titled: true }
+  { id: 'pinoy-games',    name: 'Pinoy Games',    emoji: '🎪', titled: true,
+    titleLabel: 'Pinoy Game title', titlePlaceholder: 'e.g. Tug of War, Sack Race, Palo Sebo' },
+  { id: 'attendance',     name: 'Attendance',     emoji: '📋', titled: true,
+    titleLabel: 'Attendance for', titlePlaceholder: 'e.g. Opening Ceremony, Parade, Flag Raising' }
 ];
 
 /* Events flagged `titled` need a custom name typed per entry (e.g. Tug of War). */
