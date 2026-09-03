@@ -129,10 +129,10 @@ function renderHome() {
 
   app.innerHTML = `
     ${standHtml}
-    ${scheduleHtml()}
     ${scoreboardHtml}
     <h2 class="section-title"><span class="bar"></span> Sports</h2>
-    <div class="grid">${tiles}</div>`;
+    <div class="grid">${tiles}</div>
+    ${scheduleHtml()}`;
 
   app.querySelectorAll('[data-sport]').forEach(btn =>
     btn.addEventListener('click', () => {
