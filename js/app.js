@@ -22,16 +22,28 @@ let state = {
   scheduleAuto: true       // true = auto-pick the nearest day with games
 };
 
-/* Nearest date that has games: today if it has any, else the soonest
-   upcoming day, else the most recent past day. */
+/* Pick the day to show: the nearest day that still has scheduled (unplayed)
+   games, so once a day's games are all Played it advances to the next
+   scheduled day. Falls back to the nearest day with any games. */
 function nearestGameDate() {
-  const dates = [...new Set(Store.getAll().map(m => m.date).filter(Boolean))].sort();
-  if (!dates.length) return todayStr();
   const today = todayStr();
-  if (dates.indexOf(today) !== -1) return today;
-  const upcoming = dates.filter(d => d > today);
-  if (upcoming.length) return upcoming[0];
-  return dates[dates.length - 1];
+  const pickNearest = (dates) => {
+    if (!dates.length) return null;
+    if (dates.indexOf(today) !== -1) return today;
+    const upcoming = dates.filter(d => d > today);
+    return upcoming.length ? upcoming[0] : dates[dates.length - 1];
+  };
+
+  // Prefer days that still have a scheduled game.
+  const scheduled = [...new Set(
+    Store.getAll().filter(m => m.status !== 'final' && m.date).map(m => m.date)
+  )].sort();
+  const bySchedule = pickNearest(scheduled);
+  if (bySchedule) return bySchedule;
+
+  // No scheduled games left anywhere: fall back to any day with games.
+  const anyDates = [...new Set(Store.getAll().map(m => m.date).filter(Boolean))].sort();
+  return pickNearest(anyDates) || today;
 }
 
 function esc(s) {
