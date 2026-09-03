@@ -17,6 +17,7 @@ let state = {
   sportId: null,           // null = home
   path: [],                // category ids drilled into
   tab: 'upcoming',         // 'upcoming' | 'results'
+  teamId: null,            // non-null = viewing a team's per-category breakdown
   scheduleDate: todayStr(),// day shown in the home "Games Schedule" section
   scheduleAuto: true       // true = auto-pick the nearest day with games
 };
@@ -63,6 +64,7 @@ function teamChip(id) {
 /* ---- Renderers -------------------------------------------- */
 
 function render() {
+  if (state.teamId) return renderTeam();
   if (!state.sportId) return renderHome();
   const sport = getSport(state.sportId);
   if (isLeaf(sport, state.path)) return renderSchedule(sport);
@@ -77,12 +79,13 @@ function renderHome() {
     <h2 class="section-title"><span class="bar"></span> Overall Standings</h2>
     <div class="standings">
       ${rows.map((r, i) => `
-        <div class="stand-card" style="background:${r.team.color};color:${r.team.text}">
+        <button class="stand-card" data-team="${r.team.id}" style="background:${r.team.color};color:${r.team.text}">
           <span class="rank">#${i + 1}</span>
           <div class="name">${esc(r.team.name)}</div>
           <div class="wins">${r.points}</div>
           <div class="sub">points &bull; ${r.wins} win${r.wins === 1 ? '' : 's'}</div>
-        </div>`).join('')}
+          <span class="stand-more">View breakdown &rsaquo;</span>
+        </button>`).join('')}
     </div>`;
 
   // Scoreboard: unified latest results - sport finals plus special events.
@@ -139,6 +142,15 @@ function renderHome() {
       render();
     }));
 
+  // A standings card opens that team's per-category breakdown.
+  app.querySelectorAll('[data-team]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      state.teamId = btn.dataset.team;
+      state.sportId = null;
+      state.path = [];
+      render();
+    }));
+
   // A scoreboard/schedule row jumps to that game's sport / category.
   app.querySelectorAll('[data-open-match]').forEach(card =>
     card.addEventListener('click', () => {
@@ -163,6 +175,116 @@ function renderHome() {
     state.scheduleAuto = false;
     render();
   });
+}
+
+/* Distinct leaf categories (sport + path) that have at least one game. */
+function distinctLeaves() {
+  const seen = {};
+  const out = [];
+  Store.getAll().forEach(m => {
+    const key = m.sportId + '|' + (m.path || []).join('|');
+    if (!seen[key]) { seen[key] = 1; out.push({ sportId: m.sportId, path: m.path || [] }); }
+  });
+  return out;
+}
+
+// Per-category breakdown of a team's points (sport placements + special events).
+function teamBreakdown(teamId) {
+  const sports = [];
+  distinctLeaves().forEach(({ sportId, path }) => {
+    const plays = matchesFor(sportId, path).some(m => m.teamA === teamId || m.teamB === teamId);
+    const pl = categoryPlacements(sportId, path);
+    let place = null;
+    [1, 2, 3, 4].forEach(p => { if (pl[p] === teamId) place = p; });
+    if (!plays && place === null) return;
+
+    // Round-robin record for this team in the category (context while unfinished).
+    const row = roundRobinTable(sportId, path).find(r => r.team.id === teamId);
+    sports.push({
+      sportId, path,
+      label: pathLabel(sportId, path),
+      place,
+      points: place ? pointsForPlace(place) : 0,
+      record: row && row.played ? (row.w + 'W - ' + row.l + 'L') : ''
+    });
+  });
+  // Finished categories first, then by points.
+  sports.sort((a, b) => (b.place ? 1 : 0) - (a.place ? 1 : 0) || b.points - a.points);
+
+  const events = [];
+  EventStore.getAll().forEach(ev => {
+    const place = (ev.places || {})[teamId];
+    if (!place) return;
+    const e = getEvent(ev.eventId);
+    const name = (e ? e.name : ev.eventId) + (ev.title ? ': ' + ev.title : '');
+    events.push({ name, emoji: e ? e.emoji : '', place, points: pointsForPlace(place), date: ev.date });
+  });
+  events.sort((a, b) => a.place - b.place);
+
+  return { sports, events };
+}
+
+function placeBadge(place) {
+  const medal = { 1: '🥇 1st', 2: '🥈 2nd', 3: '🥉 3rd', 4: '4th' };
+  return place ? `<span class="tb-place">${medal[place]}</span>` : `<span class="tb-place tbd">In progress</span>`;
+}
+
+function renderTeam() {
+  const team = getTeam(state.teamId);
+  if (!team) { state.teamId = null; return render(); }
+
+  const rows = standings();
+  const rank = rows.findIndex(r => r.team.id === team.id) + 1;
+  const me = rows.find(r => r.team.id === team.id) || { points: 0, wins: 0 };
+  const bd = teamBreakdown(team.id);
+
+  const sportRows = bd.sports.length ? bd.sports.map(s => `
+    <button class="tb-row" data-open-cat data-sport="${s.sportId}" data-path="${s.path.join('|')}">
+      <span class="tb-name">${esc(s.label)}${s.record ? ` <span class="tb-record">(${esc(s.record)})</span>` : ''}</span>
+      <span class="tb-right">${placeBadge(s.place)} <span class="tb-pts">${s.points ? '+' + s.points : '0'} pts</span></span>
+    </button>`).join('') : `<div class="empty">No sport games for this team yet.</div>`;
+
+  const eventRows = bd.events.length ? bd.events.map(e => `
+    <div class="tb-row static">
+      <span class="tb-name">${e.emoji} ${esc(e.name)}</span>
+      <span class="tb-right">${placeBadge(e.place)} <span class="tb-pts">+${e.points} pts</span></span>
+    </div>`).join('') : `<div class="empty">No special event placements yet.</div>`;
+
+  app.innerHTML = `
+    <div class="breadcrumb">
+      <button data-nav="home">Home</button>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">${esc(team.name)}</span>
+    </div>
+
+    <div class="team-hero" style="background:${team.color};color:${team.text}">
+      <div>
+        <div class="team-hero-name">${esc(team.name)}</div>
+        <div class="team-hero-sub">Rank #${rank} &bull; ${me.wins} win${me.wins === 1 ? '' : 's'}</div>
+      </div>
+      <div class="team-hero-pts">
+        <div class="big">${me.points}</div>
+        <div class="lbl">total points</div>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Sports</h3>
+    <div class="tb-list">${sportRows}</div>
+
+    <h3 class="sub-title">Special Events</h3>
+    <div class="tb-list">${eventRows}</div>`;
+
+  app.querySelector('[data-nav="home"]').addEventListener('click', () => {
+    state.teamId = null; render();
+  });
+  app.querySelectorAll('[data-open-cat]').forEach(b =>
+    b.addEventListener('click', () => {
+      state.teamId = null;
+      state.sportId = b.dataset.sport;
+      state.path = b.dataset.path ? b.dataset.path.split('|') : [];
+      state.tab = 'results';
+      render();
+    }));
 }
 
 // Home "Games Schedule" - all games on the selected day, across all sports.
