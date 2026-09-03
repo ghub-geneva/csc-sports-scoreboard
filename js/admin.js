@@ -281,7 +281,12 @@ function teamDot(id) {
 }
 
 function renderList() {
-  let list = Store.getAll().slice().sort(byDateTime);
+  // Scheduled (no score) first, games with scores (Played) below; each by date/time.
+  let list = Store.getAll().slice().sort((a, b) => {
+    const sa = a.status === 'final' ? 1 : 0;
+    const sb = b.status === 'final' ? 1 : 0;
+    return sa - sb || byDateTime(a, b);
+  });
   const fs = el.filterSport.value;
   const fst = el.filterStatus.value;
   if (fs) list = list.filter(m => m.sportId === fs);
