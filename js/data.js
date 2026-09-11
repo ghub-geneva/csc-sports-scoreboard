@@ -383,10 +383,9 @@ function loserOf(m) {
   return w === m.teamA ? m.teamB : m.teamA;
 }
 
-/* ---- Set-based sports (Volleyball, Badminton, Table Tennis) -- */
+/* ---- Set-based sports (Volleyball, Table Tennis; best of 3) -- */
 function isSetSport(sportId) {
   return sportId === 'volleyball' ||
-         sportId === 'badminton' ||
          sportId === 'table-tennis';
 }
 
