@@ -304,7 +304,10 @@ function renderTeam() {
 function scheduleHtml() {
   if (state.scheduleAuto) state.scheduleDate = nearestGameDate();
   const day = state.scheduleDate;
-  const games = Store.getAll().filter(m => m.date === day).sort(byDateTime);
+  // Only upcoming (not yet played) games for the day.
+  const games = Store.getAll()
+    .filter(m => m.date === day && m.status !== 'final')
+    .sort(byDateTime);
   const today = todayStr();
 
   let label = '';
