@@ -481,18 +481,13 @@ function buildPlaceRows(current) {
 }
 
 function readPlaces() {
+  // Ties are allowed: the same placement may be given to more than one team.
   const places = {};
-  const used = {};
-  let dup = false;
   TEAMS.forEach(t => {
     const val = Number($('place-' + t.id).value);
-    if (val >= 1 && val <= 4) {
-      if (used[val]) dup = true;
-      used[val] = true;
-      places[t.id] = val;
-    }
+    if (val >= 1 && val <= 4) places[t.id] = val;
   });
-  return { places, dup };
+  return { places };
 }
 
 ev.form.addEventListener('submit', async e => {
@@ -504,9 +499,8 @@ ev.form.addEventListener('submit', async e => {
     const lbl = (getEvent(ev.event.value).titleLabel || 'title').toLowerCase();
     return toast('Please enter the ' + lbl + '.');
   }
-  const { places, dup } = readPlaces();
+  const { places } = readPlaces();
   if (Object.keys(places).length === 0) return toast('Set at least one placement.');
-  if (dup) return toast('Each placement (1st to 4th) can be used only once.');
 
   const data = {
     eventId: ev.event.value,
