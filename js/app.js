@@ -141,6 +141,7 @@ function renderHome() {
 
   app.innerHTML = `
     ${standHtml}
+    ${championsHtml()}
     <h2 class="section-title"><span class="bar"></span> Sports</h2>
     <div class="grid">${tiles}</div>
     ${scheduleHtml()}
@@ -198,6 +199,52 @@ function distinctLeaves() {
     if (!seen[key]) { seen[key] = 1; out.push({ sportId: m.sportId, path: m.path || [] }); }
   });
   return out;
+}
+
+// "Champions" board: the 1st-place team in every finished sport category
+// and special event (ties can list more than one team).
+function championsHtml() {
+  const items = [];
+
+  distinctLeaves().forEach(({ sportId, path }) => {
+    const champ = categoryPlacements(sportId, path)[1];
+    if (champ) items.push({ kind: 'sport', sportId, path, label: pathLabel(sportId, path), teams: [champ] });
+  });
+  items.sort((a, b) => a.label.localeCompare(b.label));
+
+  EventStore.getAll().forEach(ev => {
+    const firsts = TEAMS.filter(t => (ev.places || {})[t.id] === 1).map(t => t.id);
+    if (!firsts.length) return;
+    const e = getEvent(ev.eventId);
+    items.push({
+      kind: 'event',
+      emoji: e ? e.emoji : '',
+      label: (e ? e.name : ev.eventId) + (ev.title ? ': ' + ev.title : ''),
+      teams: firsts
+    });
+  });
+
+  const teamPills = ids => ids.map(id => {
+    const t = getTeam(id);
+    return `<span class="champ-team"><span class="team-dot" style="background:${t.color}"></span>${esc(t.name)}</span>`;
+  }).join('');
+
+  const rows = items.map(it => {
+    const inner = `
+      <span class="champ-cat">${it.kind === 'event' && it.emoji ? it.emoji + ' ' : ''}${esc(it.label)}</span>
+      <span class="champ-teams"><span class="champ-medal">🥇</span> ${teamPills(it.teams)}</span>`;
+    return it.kind === 'sport'
+      ? `<button class="champ-row" data-open-match data-sport="${it.sportId}" data-path="${it.path.join('|')}" data-tab="results">${inner}</button>`
+      : `<div class="champ-row static">${inner}</div>`;
+  }).join('');
+
+  const body = items.length
+    ? `<div class="champ-list">${rows}</div>`
+    : `<div class="empty"><div class="big">🥇</div><div>No champions yet. They appear here once a category's Championship or a special event is decided.</div></div>`;
+
+  return `
+    <h2 class="section-title"><span class="bar"></span> Champions <span class="seed-hint">(1st place)</span></h2>
+    ${body}`;
 }
 
 // Per-category breakdown of a team's points (sport placements + special events).
