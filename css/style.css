@@ -288,6 +288,7 @@ a { color: var(--blue); }
 .tb-right { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .tb-place { font-weight: 700; font-size: .84rem; }
 .tb-place.tbd { color: var(--muted); }
+.tb-place.forfeit-label { color: #6b3fa0; }
 .tb-pts { font-weight: 800; color: var(--green); min-width: 56px; text-align: right; }
 
 /* ---- Scoring note ----------------------------------------- */

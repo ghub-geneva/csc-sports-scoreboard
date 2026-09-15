@@ -297,11 +297,18 @@ function renderTeam() {
   const me = rows.find(r => r.team.id === team.id) || { points: 0, wins: 0 };
   const bd = teamBreakdown(team.id);
 
-  const sportRows = bd.sports.length ? bd.sports.map(s => `
+  const sportRows = bd.sports.length ? bd.sports.map(s => {
+    // A team that placed but earned 0 points forfeited its placement game.
+    const forfeited = s.place && s.points === 0;
+    const badge = forfeited
+      ? `<span class="tb-place forfeit-label">Forfeited</span>`
+      : placeBadge(s.place);
+    return `
     <button class="tb-row" data-open-cat data-sport="${s.sportId}" data-path="${s.path.join('|')}">
       <span class="tb-name">${esc(s.label)}${s.record ? ` <span class="tb-record">(${esc(s.record)})</span>` : ''}</span>
-      <span class="tb-right">${placeBadge(s.place)} <span class="tb-pts">${s.points ? '+' + s.points : '0'} pts</span></span>
-    </button>`).join('') : `<div class="empty">No sport games for this team yet.</div>`;
+      <span class="tb-right">${badge} <span class="tb-pts">${s.points ? '+' + s.points : '0'} pts</span></span>
+    </button>`;
+  }).join('') : `<div class="empty">No sport games for this team yet.</div>`;
 
   const eventRows = bd.events.length ? bd.events.map(e => `
     <div class="tb-row static">
