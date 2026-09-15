@@ -263,7 +263,7 @@ function teamBreakdown(teamId) {
       sportId, path,
       label: pathLabel(sportId, path),
       place,
-      points: place ? pointsForPlace(place) : 0,
+      points: teamCategoryPoints(sportId, path, teamId),
       record: row && row.played ? (row.w + 'W - ' + row.l + 'L') : ''
     });
   });
@@ -637,12 +637,13 @@ function placementsHtml(sport) {
   const cells = [1, 2, 3, 4].map(place => {
     const teamId = p[place];
     const t = teamId ? getTeam(teamId) : null;
+    const pts = t ? teamCategoryPoints(sport.id, state.path, teamId) : pointsForPlace(place);
     return `
       <div class="place-cell ${t ? '' : 'tbd'}">
         <div class="place-rank">${medal[place]}</div>
         ${t ? `<span class="team-dot" style="background:${t.color}"></span>
                <span class="place-team">${esc(t.name)}</span>` : `<span class="place-team">TBD</span>`}
-        <div class="place-pts">${pointsForPlace(place)} pts</div>
+        <div class="place-pts">${pts} pts</div>
       </div>`;
   }).join('');
   return `

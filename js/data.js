@@ -473,6 +473,26 @@ function categoryPlacements(sportId, path) {
   return out;
 }
 
+/* Points a team actually earned in one sport category (from its placement
+   games), matching the standings rule: a forfeiting loser earns 0. */
+function teamCategoryPoints(sportId, path, teamId) {
+  let pts = 0;
+  matchesFor(sportId, path).forEach(m => {
+    if (m.status !== 'final') return;
+    const w = winnerOf(m), l = loserOf(m);
+    if (!w) return;
+    const stage = stageOf(m);
+    if (stage === 'championship') {
+      if (w === teamId) pts += 10;
+      else if (l === teamId && !m.forfeit) pts += 7;
+    } else if (stage === 'battle-3rd') {
+      if (w === teamId) pts += 5;
+      else if (l === teamId && !m.forfeit) pts += 3;
+    }
+  });
+  return pts;
+}
+
 /* Overall standings per team: placement points from sport finals plus
    special events, with a wins tally as a secondary stat. */
 function standings() {
@@ -487,9 +507,10 @@ function standings() {
     const w = winnerOf(m), l = loserOf(m);
     if (w && tally[w]) tally[w].wins++;
     if (!w) return;
+    // The winner earns placement points. A forfeiting loser earns 0.
     const stage = stageOf(m);
-    if (stage === 'championship') { tally[w].points += 10; if (tally[l]) tally[l].points += 7; }
-    else if (stage === 'battle-3rd') { tally[w].points += 5; if (tally[l]) tally[l].points += 3; }
+    if (stage === 'championship') { tally[w].points += 10; if (!m.forfeit && tally[l]) tally[l].points += 7; }
+    else if (stage === 'battle-3rd') { tally[w].points += 5; if (!m.forfeit && tally[l]) tally[l].points += 3; }
   });
 
   // Special events: add placement points (1st=10, 2nd=7, 3rd=5, 4th=3).
