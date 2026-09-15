@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260914035128" />
+  <link rel="stylesheet" href="css/style.css?v=20260915031406" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -114,6 +114,14 @@
               <option value="scheduled">Scheduled (upcoming)</option>
               <option value="final">Played (record result)</option>
             </select>
+          </div>
+          <div class="field" id="wrap-forfeit" style="display:none">
+            <label>Forfeit</label>
+            <label class="chk"><input type="checkbox" id="f-forfeit" /> Game was forfeited (no score)</label>
+          </div>
+          <div class="field" id="wrap-forfeit-by" style="display:none">
+            <label for="f-forfeit-by">Forfeited by (this team loses)</label>
+            <select id="f-forfeit-by"></select>
           </div>
           <div class="field" id="wrap-scores" style="display:none">
             <label>Score</label>
@@ -326,6 +334,7 @@
         <div class="doc-body">
           <p>For a scheduled game, use the <strong>Record result</strong> box on its card in "Scheduled &amp; Past Games", or click <strong>Edit</strong> and set Status to Played.</p>
           <p><strong>Volleyball and Table Tennis</strong> are best of 3 sets: enter each set's points (Set 1, 2, 3). Leave Set 3 blank for a 2-0. The winner is whoever takes 2 sets.</p>
+          <p><strong>Forfeit:</strong> when recording a result, tick <em>Forfeit</em> and choose which team forfeited. No score is stored, and the other team is credited as the winner (so placement points still apply).</p>
           <p>Use <strong>Reopen</strong> to move a played game back to scheduled.</p>
         </div>
       </details>
@@ -368,6 +377,7 @@
         <div class="cl-entry">
           <div class="cl-date">2026-09-14</div>
           <ul>
+            <li>Forfeit option: record a game as forfeited (no score); the other team is credited as the winner.</li>
             <li>Added a Champions board on the home page: the 1st-place team in every category and special event.</li>
             <li>Special events allow ties: two or more teams can share the same placement (each gets that placement's points).</li>
             <li>Games Schedule shows only unplayed games.</li>
@@ -424,8 +434,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260914035128"></script>
-  <script src="js/data.js?v=20260914035128"></script>
-  <script src="js/admin.js?v=20260914035128"></script>
+  <script src="js/config.js?v=20260915031406"></script>
+  <script src="js/data.js?v=20260915031406"></script>
+  <script src="js/admin.js?v=20260915031406"></script>
 </body>
 </html>

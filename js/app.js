@@ -430,9 +430,12 @@ function scoreboardRow(m) {
   const stageTag = stageId !== 'round-robin'
     ? `<span class="sb-stage">${esc(getStage(stageId).name)}</span>` : '';
   const vb = isSetSport(m.sportId);
+  const ff = !!m.forfeit;
   const brk = vb ? setsBreakdown(m) : '';
-  const foot = (w ? esc(getTeam(w).name) + ' won' : 'Draw')
-    + (vb ? ` &bull; sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' (' + esc(brk) + ')' : ''}` : '');
+  const foot = ff
+    ? (w ? esc(getTeam(w).name) + ' won by forfeit' : 'Forfeit')
+    : (w ? esc(getTeam(w).name) + ' won' : 'Draw')
+      + (vb ? ` &bull; sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' (' + esc(brk) + ')' : ''}` : '');
   return `
     <button class="scoreboard-card" data-open-match
         data-sport="${m.sportId}" data-path="${(m.path || []).join('|')}">
@@ -441,8 +444,8 @@ function scoreboardRow(m) {
         <span class="sb-date">${fmtDate(m.date)}</span>
       </div>
       ${stageTag}
-      ${side(m.teamA, tA, m.scoreA)}
-      ${side(m.teamB, tB, m.scoreB)}
+      ${side(m.teamA, tA, ff ? (w === m.teamA ? 'W' : 'F') : m.scoreA)}
+      ${side(m.teamB, tB, ff ? (w === m.teamB ? 'W' : 'F') : m.scoreB)}
       <div class="sb-foot">${foot}</div>
     </button>`;
 }
@@ -650,8 +653,12 @@ function placementsHtml(sport) {
 function matchRow(m) {
   const w = winnerOf(m);
   const isFinal = m.status === 'final';
-  const scoreA = isFinal ? `<span class="score ${w === m.teamA ? 'win' : ''}">${esc(m.scoreA)}</span>` : '';
-  const scoreB = isFinal ? `<span class="score ${w === m.teamB ? 'win' : ''}">${esc(m.scoreB)}</span>` : '';
+  const ff = !!m.forfeit;
+  const scoreCell = (id) => {
+    if (!isFinal) return '';
+    const txt = ff ? (w === id ? 'W' : 'F') : esc(id === m.teamA ? m.scoreA : m.scoreB);
+    return `<span class="score ${w === id ? 'win' : ''}">${txt}</span>`;
+  };
 
   const stageId = stageOf(m);
   const stageBadge = stageId === 'round-robin'
@@ -663,11 +670,21 @@ function matchRow(m) {
 
   let winnerLine = '';
   if (isFinal) {
-    const setNote = vb ? ` <span class="sets-note">(sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' &bull; ' + esc(brk) : ''})</span>` : '';
-    winnerLine = w
-      ? `<div class="winner-line">Winner: <strong>${esc(getTeam(w).name)}</strong>${setNote}</div>`
-      : `<div class="winner-line">Result: <strong>Draw</strong></div>`;
+    if (ff) {
+      winnerLine = w
+        ? `<div class="winner-line">Winner: <strong>${esc(getTeam(w).name)}</strong> <span class="sets-note">(by forfeit)</span></div>`
+        : `<div class="winner-line">Forfeit</div>`;
+    } else {
+      const setNote = vb ? ` <span class="sets-note">(sets ${esc(m.scoreA)}-${esc(m.scoreB)}${brk ? ' &bull; ' + esc(brk) : ''})</span>` : '';
+      winnerLine = w
+        ? `<div class="winner-line">Winner: <strong>${esc(getTeam(w).name)}</strong>${setNote}</div>`
+        : `<div class="winner-line">Result: <strong>Draw</strong></div>`;
+    }
   }
+
+  const statusBadge = ff
+    ? `<span class="badge forfeit">Forfeit</span>`
+    : `<span class="badge ${isFinal ? 'final' : 'scheduled'}">${isFinal ? 'Played' : 'Scheduled'}</span>`;
 
   return `
     <div class="match">
@@ -677,13 +694,13 @@ function matchRow(m) {
         <div class="venue">${m.venue ? esc(m.venue) : ''}</div>
       </div>
       <div class="teams-row">
-        ${teamChip(m.teamA)} ${scoreA}
+        ${teamChip(m.teamA)} ${scoreCell(m.teamA)}
         <span class="vs">VS</span>
-        ${scoreB} ${teamChip(m.teamB)}
+        ${scoreCell(m.teamB)} ${teamChip(m.teamB)}
       </div>
       <div class="match-badges">
         ${stageBadge}
-        <span class="badge ${isFinal ? 'final' : 'scheduled'}">${isFinal ? 'Played' : 'Scheduled'}</span>
+        ${statusBadge}
       </div>
       ${winnerLine}
     </div>`;

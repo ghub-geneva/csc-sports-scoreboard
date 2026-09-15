@@ -16,6 +16,8 @@ const el = {
   wrapScores: $('wrap-scores'), scoreA: $('f-scoreA'), scoreB: $('f-scoreB'),
   lblScoreA: $('lbl-scoreA'), lblScoreB: $('lbl-scoreB'),
   wrapSets: $('wrap-sets'), setTeamA: $('set-team-a'), setTeamB: $('set-team-b'),
+  wrapForfeit: $('wrap-forfeit'), forfeit: $('f-forfeit'),
+  wrapForfeitBy: $('wrap-forfeit-by'), forfeitBy: $('f-forfeit-by'),
   submitBtn: $('submit-btn'), cancelEdit: $('cancel-edit'),
   filterSport: $('filter-sport'), filterStatus: $('filter-status'),
   list: $('admin-list'), toast: $('toast')
@@ -92,11 +94,27 @@ function readPath() {
 }
 
 /* ---- Status / score toggle -------------------------------- */
+// Fill the "forfeited by" dropdown with the two chosen teams.
+function refreshForfeitOptions() {
+  const keep = el.forfeitBy.value;
+  const opts = ['<option value="">Select team</option>'];
+  [el.teamA.value, el.teamB.value].forEach(id => {
+    const t = getTeam(id);
+    if (t) opts.push(opt(t.id, t.name));
+  });
+  el.forfeitBy.innerHTML = opts.join('');
+  if ([el.teamA.value, el.teamB.value].indexOf(keep) !== -1) el.forfeitBy.value = keep;
+}
+
 function refreshScoreVisibility() {
   const isFinal = el.status.value === 'final';
   const vb = isSetSport(el.sport.value);
-  el.wrapScores.style.display = (isFinal && !vb) ? '' : 'none';
-  el.wrapSets.style.display = (isFinal && vb) ? '' : 'none';
+  const ff = isFinal && el.forfeit.checked;
+
+  el.wrapForfeit.style.display = isFinal ? '' : 'none';
+  el.wrapForfeitBy.style.display = ff ? '' : 'none';
+  el.wrapScores.style.display = (isFinal && !ff && !vb) ? '' : 'none';
+  el.wrapSets.style.display = (isFinal && !ff && vb) ? '' : 'none';
 
   const nameA = getTeam(el.teamA.value) ? getTeam(el.teamA.value).name : 'A';
   const nameB = getTeam(el.teamB.value) ? getTeam(el.teamB.value).name : 'B';
@@ -104,10 +122,12 @@ function refreshScoreVisibility() {
   el.lblScoreB.textContent = nameB;
   el.setTeamA.textContent = nameA;
   el.setTeamB.textContent = nameB;
+  refreshForfeitOptions();
 }
 el.status.addEventListener('change', refreshScoreVisibility);
 el.teamA.addEventListener('change', refreshScoreVisibility);
 el.teamB.addEventListener('change', refreshScoreVisibility);
+el.forfeit.addEventListener('change', refreshScoreVisibility);
 
 /* Read fully-filled sets from the form as [[aPts, bPts], ...]. */
 function readSets() {
@@ -142,10 +162,15 @@ el.form.addEventListener('submit', async e => {
 
   const status = el.status.value;
   const vb = isSetSport(el.sport.value);
-  let scoreA = null, scoreB = null, sets = null;
+  const isForfeit = status === 'final' && el.forfeit.checked;
+  let scoreA = null, scoreB = null, sets = null, forfeitBy = null;
 
   if (status === 'final') {
-    if (vb) {
+    if (isForfeit) {
+      forfeitBy = el.forfeitBy.value;
+      if (forfeitBy !== el.teamA.value && forfeitBy !== el.teamB.value)
+        return toast('Choose which team forfeited.');
+    } else if (vb) {
       sets = readSets();
       if (!sets.length) return toast('Enter the set scores.');
       const w = setsWon(sets);
@@ -171,9 +196,11 @@ el.form.addEventListener('submit', async e => {
     time: el.time.value,
     venue: el.venue.value.trim(),
     stage: el.stage.value,
-    status, scoreA, scoreB
+    status, scoreA, scoreB,
+    forfeit: isForfeit, forfeitBy
   };
-  if (vb) data.sets = sets || [];
+  if (vb && !isForfeit) data.sets = sets || [];
+  else data.sets = [];
 
   try {
     if (el.editId.value) {
@@ -218,7 +245,9 @@ function editGame(id) {
   el.scoreA.value = m.scoreA == null ? '' : m.scoreA;
   el.scoreB.value = m.scoreB == null ? '' : m.scoreB;
   fillSets(m.sets);
+  el.forfeit.checked = !!m.forfeit;
   refreshScoreVisibility();
+  if (m.forfeit && m.forfeitBy) el.forfeitBy.value = m.forfeitBy;
 
   el.formTitle.textContent = 'Edit Game';
   el.submitBtn.textContent = 'Save changes';
@@ -259,7 +288,7 @@ async function saveQuickSets(id) {
 
 async function reopenGame(id) {
   try {
-    await Store.update(id, { status: 'scheduled', scoreA: null, scoreB: null });
+    await Store.update(id, { status: 'scheduled', scoreA: null, scoreB: null, forfeit: false, forfeitBy: null });
     toast('Moved back to scheduled.');
     renderList();
   } catch (err) { handleWriteError(err); }
@@ -302,16 +331,19 @@ function renderList() {
     const w = winnerOf(m);
     const isFinal = m.status === 'final';
     const vb = isSetSport(m.sportId);
+    const ff = !!m.forfeit;
     const brk = vb ? setsBreakdown(m) : '';
-    const scoreText = isFinal
-      ? (vb ? `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)} sets${brk ? ' (' + esc(brk) + ')' : ''}`
-            : `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)}`)
-      : '';
+    const scoreText = !isFinal ? ''
+      : ff ? 'Forfeit'
+      : (vb ? `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)} sets${brk ? ' (' + esc(brk) + ')' : ''}`
+            : `${esc(m.scoreA)} &ndash; ${esc(m.scoreB)}`);
     const score = isFinal ? ` &nbsp; <strong>${scoreText}</strong>` : '';
-    const badge = isFinal
-      ? `<span class="badge final">Played</span>`
-      : `<span class="badge scheduled">Scheduled</span>`;
-    const winTag = (isFinal && w) ? ` <span class="badge win-tag">${esc(getTeam(w).name)} won</span>`
+    const badge = ff
+      ? `<span class="badge forfeit">Forfeit</span>`
+      : isFinal
+        ? `<span class="badge final">Played</span>`
+        : `<span class="badge scheduled">Scheduled</span>`;
+    const winTag = (isFinal && w) ? ` <span class="badge win-tag">${esc(getTeam(w).name)} won${ff ? ' (forfeit)' : ''}</span>`
       : (isFinal && !w) ? ` <span class="badge">Draw</span>` : '';
     const stageId = stageOf(m);
     const stageTag = stageId === 'round-robin'

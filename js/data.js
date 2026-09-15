@@ -370,9 +370,16 @@ function matchesFor(sportId, path) {
   return Store.getAll().filter(m => m.sportId === sportId && samePath(m.path, path));
 }
 
-/* Winner id of a final match, or null for a draw / not final. */
+/* Winner id of a final match, or null for a draw / not final.
+   A forfeited game has no score: the non-forfeiting team wins. */
 function winnerOf(m) {
-  if (m.status !== 'final' || m.scoreA == null || m.scoreB == null) return null;
+  if (m.status !== 'final') return null;
+  if (m.forfeit) {
+    if (m.forfeitBy === m.teamA) return m.teamB;
+    if (m.forfeitBy === m.teamB) return m.teamA;
+    return null;
+  }
+  if (m.scoreA == null || m.scoreB == null) return null;
   if (Number(m.scoreA) > Number(m.scoreB)) return m.teamA;
   if (Number(m.scoreB) > Number(m.scoreA)) return m.teamB;
   return null; // draw
@@ -437,8 +444,10 @@ function roundRobinTable(sportId, path) {
       const a = rows[m.teamA], b = rows[m.teamB];
       if (!a || !b) return;
       a.played++; b.played++;
-      a.pf += Number(m.scoreA); a.pa += Number(m.scoreB);
-      b.pf += Number(m.scoreB); b.pa += Number(m.scoreA);
+      if (!m.forfeit && m.scoreA != null && m.scoreB != null) {
+        a.pf += Number(m.scoreA); a.pa += Number(m.scoreB);
+        b.pf += Number(m.scoreB); b.pa += Number(m.scoreA);
+      }
       const w = winnerOf(m);
       if (w === m.teamA) { a.w++; b.l++; }
       else if (w === m.teamB) { b.w++; a.l++; }

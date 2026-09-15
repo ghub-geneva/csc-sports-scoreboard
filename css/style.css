@@ -629,6 +629,7 @@ a { color: var(--blue); }
 }
 .badge.scheduled { background: #fff5d6; color: #8a6d00; }
 .badge.final     { background: #e2f6ea; color: #12703f; }
+.badge.forfeit   { background: #f0e6f7; color: #6b3fa0; }
 .badge.win-tag   { background: var(--gold); color: #4a3b00; }
 
 .winner-line {
@@ -690,6 +691,15 @@ a { color: var(--blue); }
   box-shadow: 0 0 0 3px rgba(0, 56, 168, 0.12);
 }
 .field select:disabled { background: #f1f3f9; color: var(--muted); }
+.field label.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.field label.chk input { width: auto; }
 
 .btn {
   border: none;
