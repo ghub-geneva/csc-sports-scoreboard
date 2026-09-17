@@ -38,6 +38,7 @@ function opt(value, label) { return `<option value="${esc(value)}">${esc(label)}
 /* ---- Populate static selects ------------------------------ */
 function fillTeams(sel) {
   sel.innerHTML = '<option value="">Select team</option>' +
+    opt('tba', 'TBA (to be decided)') +
     TEAMS.map(t => opt(t.id, t.name)).join('');
 }
 fillTeams(el.teamA);
@@ -156,11 +157,14 @@ el.form.addEventListener('submit', async e => {
   if (!el.sport.value) return toast('Please choose a sport.');
   const cat = readPath();
   if (!cat.ok) return toast(cat.msg);
-  if (!el.teamA.value || !el.teamB.value) return toast('Please choose both teams.');
-  if (el.teamA.value === el.teamB.value) return toast('Teams must be different.');
+  if (!el.teamA.value || !el.teamB.value) return toast('Please choose both teams (or TBA).');
+  const teamsTBA = el.teamA.value === 'tba' || el.teamB.value === 'tba';
+  if (!teamsTBA && el.teamA.value === el.teamB.value) return toast('Teams must be different.');
   if (!el.date.value) return toast('Please set a date.');
 
   const status = el.status.value;
+  if (status === 'final' && teamsTBA)
+    return toast('Assign both teams before recording a result.');
   const vb = isSetSport(el.sport.value);
   const isForfeit = status === 'final' && el.forfeit.checked;
   let scoreA = null, scoreB = null, sets = null, forfeitBy = null;
@@ -350,8 +354,11 @@ function renderList() {
       ? `<span class="badge stage-rr">Round Robin</span>`
       : `<span class="badge stage-final">${esc(getStage(stageId).name)}</span>`;
 
+    const teamsTBA = m.teamA === 'tba' || m.teamB === 'tba';
     // Volleyball records per-set points inline; other sports use a single score.
-    const quick = !isFinal
+    const quick = teamsTBA
+      ? (!isFinal ? `<div class="hint" style="margin:8px 0 0">Teams to be decided. Use <strong>Edit</strong> to assign the teams, then record the result.</div>` : '')
+      : !isFinal
       ? (vb
         ? `<div class="quick-sets">
              <div class="qs-head">

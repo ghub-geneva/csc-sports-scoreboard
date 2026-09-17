@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260915033442" />
+  <link rel="stylesheet" href="css/style.css?v=20260917001212" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -308,7 +308,7 @@
         <div class="doc-body">
           <ol>
             <li>Pick the <strong>Sport</strong>. If it has categories (Badminton, Table Tennis, Pickleball), choose them.</li>
-            <li>Choose <strong>Team A</strong> and <strong>Team B</strong> (they must be different).</li>
+            <li>Choose <strong>Team A</strong> and <strong>Team B</strong> (they must be different). Not decided yet? Pick <strong>TBA</strong> for one or both, schedule it now, then Edit later to set the real teams. Useful for the Championship and Battle for 3rd before the seeds are known.</li>
             <li>Set the <strong>Date</strong>, and optionally the <strong>Time</strong> and <strong>Venue</strong>.</li>
             <li>Choose the <strong>Stage</strong> (see below).</li>
             <li>Leave <strong>Status</strong> as <em>Scheduled</em> for an upcoming game, or set it to <em>Played</em> to record the score now.</li>
@@ -375,6 +375,13 @@
 
       <div class="changelog">
         <div class="cl-entry">
+          <div class="cl-date">2026-09-17</div>
+          <ul>
+            <li>Teams can be set to TBA when scheduling a game (e.g. Championship / Battle for 3rd before the seeds are known); assign the real teams later.</li>
+            <li>Forfeit now shows as "Forfeited" (not a rank) on a team's breakdown, and the scoring note lists Forfeit = 0 pts.</li>
+          </ul>
+        </div>
+        <div class="cl-entry">
           <div class="cl-date">2026-09-14</div>
           <ul>
             <li>Forfeit option: record a game as forfeited (no score); the other team wins, and the forfeiting team earns 0 points.</li>
@@ -434,8 +441,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260915033442"></script>
-  <script src="js/data.js?v=20260915033442"></script>
-  <script src="js/admin.js?v=20260915033442"></script>
+  <script src="js/config.js?v=20260917001212"></script>
+  <script src="js/data.js?v=20260917001212"></script>
+  <script src="js/admin.js?v=20260917001212"></script>
 </body>
 </html>

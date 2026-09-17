@@ -52,7 +52,13 @@ const SPORTS = [
 
 /* ---- Lookups ---------------------------------------------- */
 function getSport(id) { return SPORTS.find(s => s.id === id) || null; }
-function getTeam(id)  { return TEAMS.find(t => t.id === id) || null; }
+/* Placeholder team for games scheduled before the teams are decided. */
+const TBA_TEAM = { id: 'tba', name: 'TBA', color: '#9aa5b8', text: '#ffffff', tba: true };
+function getTeam(id) {
+  if (id === 'tba') return TBA_TEAM;
+  return TEAMS.find(t => t.id === id) || null;
+}
+function isTBA(m) { return m.teamA === 'tba' || m.teamB === 'tba'; }
 
 /* Children available at a given path (array of category ids). */
 function childrenByPath(sport, path) {
@@ -374,6 +380,7 @@ function matchesFor(sportId, path) {
    A forfeited game has no score: the non-forfeiting team wins. */
 function winnerOf(m) {
   if (m.status !== 'final') return null;
+  if (isTBA(m)) return null;
   if (m.forfeit) {
     if (m.forfeitBy === m.teamA) return m.teamB;
     if (m.forfeitBy === m.teamB) return m.teamA;
