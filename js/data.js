@@ -403,6 +403,14 @@ function isSetSport(sportId) {
          sportId === 'table-tennis';
 }
 
+/* Best-of format for a set game. Volleyball Championship is best of 5;
+   everything else set-based is best of 3. */
+function setsBestOf(sportId, stage) {
+  return (sportId === 'volleyball' && stage === 'championship') ? 5 : 3;
+}
+function setsNeededToWin(bestOf) { return Math.floor(bestOf / 2) + 1; } // 5->3, 3->2
+function matchBestOf(m) { return setsBestOf(m.sportId, stageOf(m)); }
+
 /* Count sets won per side from a sets array [[aPts,bPts], ...]. */
 function setsWon(sets) {
   let a = 0, b = 0;

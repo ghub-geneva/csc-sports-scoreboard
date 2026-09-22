@@ -15,7 +15,7 @@ const el = {
   stage: $('f-stage'), status: $('f-status'),
   wrapScores: $('wrap-scores'), scoreA: $('f-scoreA'), scoreB: $('f-scoreB'),
   lblScoreA: $('lbl-scoreA'), lblScoreB: $('lbl-scoreB'),
-  wrapSets: $('wrap-sets'), setTeamA: $('set-team-a'), setTeamB: $('set-team-b'),
+  wrapSets: $('wrap-sets'), setTeamA: $('set-team-a'), setTeamB: $('set-team-b'), setsLabel: $('sets-label'),
   wrapForfeit: $('wrap-forfeit'), forfeit: $('f-forfeit'),
   wrapForfeitBy: $('wrap-forfeit-by'), forfeitBy: $('f-forfeit-by'),
   submitBtn: $('submit-btn'), cancelEdit: $('cancel-edit'),
@@ -107,6 +107,27 @@ function refreshForfeitOptions() {
   if ([el.teamA.value, el.teamB.value].indexOf(keep) !== -1) el.forfeitBy.value = keep;
 }
 
+// Build the right number of Set rows for the current best-of format.
+let _setRowsCount = 0;
+function buildSetRows(bestOf) {
+  if (_setRowsCount === bestOf) return;
+  let html = '';
+  for (let i = 1; i <= bestOf; i++) {
+    html += `<div class="set-row">
+      <span class="set-lbl">Set ${i}</span>
+      <input type="number" min="0" id="set-a-${i}" />
+      <input type="number" min="0" id="set-b-${i}" />
+    </div>`;
+  }
+  $('set-rows').innerHTML = html;
+  _setRowsCount = bestOf;
+}
+
+// Best-of format currently selected in the form.
+function formBestOf() {
+  return isSetSport(el.sport.value) ? setsBestOf(el.sport.value, el.stage.value) : 3;
+}
+
 function refreshScoreVisibility() {
   const isFinal = el.status.value === 'final';
   const vb = isSetSport(el.sport.value);
@@ -116,6 +137,12 @@ function refreshScoreVisibility() {
   el.wrapForfeitBy.style.display = ff ? '' : 'none';
   el.wrapScores.style.display = (isFinal && !ff && !vb) ? '' : 'none';
   el.wrapSets.style.display = (isFinal && !ff && vb) ? '' : 'none';
+
+  if (vb) {
+    const bestOf = formBestOf();
+    buildSetRows(bestOf);
+    el.setsLabel.textContent = 'Set scores (best of ' + bestOf + ', leave later sets blank if not played)';
+  }
 
   const nameA = getTeam(el.teamA.value) ? getTeam(el.teamA.value).name : 'A';
   const nameB = getTeam(el.teamB.value) ? getTeam(el.teamB.value).name : 'B';
@@ -128,14 +155,15 @@ function refreshScoreVisibility() {
 el.status.addEventListener('change', refreshScoreVisibility);
 el.teamA.addEventListener('change', refreshScoreVisibility);
 el.teamB.addEventListener('change', refreshScoreVisibility);
+el.stage.addEventListener('change', refreshScoreVisibility);
 el.forfeit.addEventListener('change', refreshScoreVisibility);
 
 /* Read fully-filled sets from the form as [[aPts, bPts], ...]. */
-function readSets() {
+function readSets(bestOf) {
   const sets = [];
-  for (let i = 1; i <= 3; i++) {
-    const a = $('set-a-' + i).value;
-    const b = $('set-b-' + i).value;
+  for (let i = 1; i <= bestOf; i++) {
+    const ai = $('set-a-' + i), bi = $('set-b-' + i);
+    const a = ai ? ai.value : '', b = bi ? bi.value : '';
     if (a !== '' && b !== '') sets.push([Number(a), Number(b)]);
   }
   return sets;
@@ -143,10 +171,11 @@ function readSets() {
 
 /* Fill the set inputs from a sets array. */
 function fillSets(sets) {
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= _setRowsCount; i++) {
     const s = (sets || [])[i - 1];
-    $('set-a-' + i).value = (s && s[0] != null) ? s[0] : '';
-    $('set-b-' + i).value = (s && s[1] != null) ? s[1] : '';
+    const ai = $('set-a-' + i), bi = $('set-b-' + i);
+    if (ai) ai.value = (s && s[0] != null) ? s[0] : '';
+    if (bi) bi.value = (s && s[1] != null) ? s[1] : '';
   }
 }
 
@@ -175,12 +204,14 @@ el.form.addEventListener('submit', async e => {
       if (forfeitBy !== el.teamA.value && forfeitBy !== el.teamB.value)
         return toast('Choose which team forfeited.');
     } else if (vb) {
-      sets = readSets();
+      const bestOf = formBestOf();
+      const need = setsNeededToWin(bestOf);
+      sets = readSets(bestOf);
       if (!sets.length) return toast('Enter the set scores.');
       const w = setsWon(sets);
-      if (Math.max(w.a, w.b) < 2)
-        return toast('One team must win 2 sets (best of 3).');
-      if (w.a === w.b) return toast('A best of 3 cannot end level on sets.');
+      if (Math.max(w.a, w.b) < need)
+        return toast('One team must win ' + need + ' sets (best of ' + bestOf + ').');
+      if (w.a === w.b) return toast('A best of ' + bestOf + ' cannot end level on sets.');
       scoreA = w.a;
       scoreB = w.b;
     } else {
@@ -248,9 +279,9 @@ function editGame(id) {
   el.status.value = m.status;
   el.scoreA.value = m.scoreA == null ? '' : m.scoreA;
   el.scoreB.value = m.scoreB == null ? '' : m.scoreB;
-  fillSets(m.sets);
   el.forfeit.checked = !!m.forfeit;
-  refreshScoreVisibility();
+  refreshScoreVisibility();      // builds the right number of set rows first
+  fillSets(m.sets);              // then fill them
   if (m.forfeit && m.forfeitBy) el.forfeitBy.value = m.forfeitBy;
 
   el.formTitle.textContent = 'Edit Game';
@@ -271,18 +302,21 @@ async function saveQuickScore(id) {
   } catch (err) { handleWriteError(err); }
 }
 
-// Record a volleyball result from the inline per-set inputs.
+// Record a volleyball/table-tennis result from the inline per-set inputs.
 async function saveQuickSets(id) {
+  const m = Store.getAll().find(x => x.id === id);
+  const bestOf = m ? matchBestOf(m) : 3;
+  const need = setsNeededToWin(bestOf);
   const sets = [];
-  for (let i = 1; i <= 3; i++) {
-    const a = $('qs-a-' + id + '-' + i).value;
-    const b = $('qs-b-' + id + '-' + i).value;
+  for (let i = 1; i <= bestOf; i++) {
+    const ai = $('qs-a-' + id + '-' + i), bi = $('qs-b-' + id + '-' + i);
+    const a = ai ? ai.value : '', b = bi ? bi.value : '';
     if (a !== '' && b !== '') sets.push([Number(a), Number(b)]);
   }
   if (!sets.length) return toast('Enter the set scores.');
   const wsets = setsWon(sets);
-  if (Math.max(wsets.a, wsets.b) < 2) return toast('One team must win 2 sets (best of 3).');
-  if (wsets.a === wsets.b) return toast('A best of 3 cannot end level on sets.');
+  if (Math.max(wsets.a, wsets.b) < need) return toast('One team must win ' + need + ' sets (best of ' + bestOf + ').');
+  if (wsets.a === wsets.b) return toast('A best of ' + bestOf + ' cannot end level on sets.');
   try {
     await Store.update(id, { status: 'final', scoreA: wsets.a, scoreB: wsets.b, sets });
     toast('Result recorded.');
@@ -366,7 +400,7 @@ function renderList() {
                <span>${esc(tA ? tA.name : 'A')}</span>
                <span>${esc(tB ? tB.name : 'B')}</span>
              </div>
-             ${[1, 2, 3].map(i => `
+             ${Array.from({ length: matchBestOf(m) }, (_, k) => k + 1).map(i => `
                <div class="qs-row">
                  <span class="set-lbl">Set ${i}</span>
                  <input type="number" min="0" id="qs-a-${m.id}-${i}" />
