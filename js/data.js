@@ -473,18 +473,38 @@ function roundRobinTable(sportId, path) {
     .sort((p, q) => q.w - p.w || q.diff - p.diff || q.pf - p.pf);
 }
 
-/* Final 1st..4th placement for a category from its placement games.
+/* The single Championship and Battle-for-3rd that count for a category.
+   If a stage was entered more than once (a mistake), only the latest final
+   game counts, so points are never double-awarded. */
+function categoryFinals(sportId, path) {
+  const best = {}; // stage -> { m, k }
+  matchesFor(sportId, path).forEach(m => {
+    if (m.status !== 'final') return;
+    const s = stageOf(m);
+    if (s !== 'championship' && s !== 'battle-3rd') return;
+    const k = (m.date || '') + 'T' + (m.time || '') + '|' + m.id;
+    if (!best[s] || k >= best[s].k) best[s] = { m, k };
+  });
+  return {
+    championship: best['championship'] ? best['championship'].m : null,
+    battle3rd: best['battle-3rd'] ? best['battle-3rd'].m : null
+  };
+}
+
+/* Final 1st..4th placement for a category from its (deduped) placement games.
    Returns { 1: teamId, 2: teamId, 3: teamId, 4: teamId } (partial if
    the placement games are not all final). */
 function categoryPlacements(sportId, path) {
   const out = {};
-  matchesFor(sportId, path).forEach(m => {
-    if (m.status !== 'final') return;
-    const w = winnerOf(m), l = loserOf(m);
-    if (!w) return;
-    if (stageOf(m) === 'championship') { out[1] = w; out[2] = l; }
-    else if (stageOf(m) === 'battle-3rd') { out[3] = w; out[4] = l; }
-  });
+  const f = categoryFinals(sportId, path);
+  if (f.championship) {
+    const w = winnerOf(f.championship);
+    if (w) { out[1] = w; out[2] = loserOf(f.championship); }
+  }
+  if (f.battle3rd) {
+    const w = winnerOf(f.battle3rd);
+    if (w) { out[3] = w; out[4] = loserOf(f.battle3rd); }
+  }
   return out;
 }
 
@@ -492,19 +512,17 @@ function categoryPlacements(sportId, path) {
    games), matching the standings rule: a forfeiting loser earns 0. */
 function teamCategoryPoints(sportId, path, teamId) {
   let pts = 0;
-  matchesFor(sportId, path).forEach(m => {
-    if (m.status !== 'final') return;
-    const w = winnerOf(m), l = loserOf(m);
-    if (!w) return;
-    const stage = stageOf(m);
-    if (stage === 'championship') {
-      if (w === teamId) pts += 10;
-      else if (l === teamId && !m.forfeit) pts += 7;
-    } else if (stage === 'battle-3rd') {
-      if (w === teamId) pts += 5;
-      else if (l === teamId && !m.forfeit) pts += 3;
-    }
-  });
+  const f = categoryFinals(sportId, path);
+  if (f.championship) {
+    const w = winnerOf(f.championship), l = loserOf(f.championship);
+    if (w === teamId) pts += 10;
+    else if (l === teamId && !f.championship.forfeit) pts += 7;
+  }
+  if (f.battle3rd) {
+    const w = winnerOf(f.battle3rd), l = loserOf(f.battle3rd);
+    if (w === teamId) pts += 5;
+    else if (l === teamId && !f.battle3rd.forfeit) pts += 3;
+  }
   return pts;
 }
 
@@ -514,18 +532,25 @@ function standings() {
   const tally = {};
   TEAMS.forEach(t => { tally[t.id] = { team: t, wins: 0, played: 0, points: 0 }; });
 
-  // Sports: count wins / games played, and award points from placement games.
+  // Sports: count wins / games played from all final games.
   Store.getAll().forEach(m => {
     if (m.status !== 'final') return;
     if (tally[m.teamA]) tally[m.teamA].played++;
     if (tally[m.teamB]) tally[m.teamB].played++;
-    const w = winnerOf(m), l = loserOf(m);
+    const w = winnerOf(m);
     if (w && tally[w]) tally[w].wins++;
-    if (!w) return;
-    // The winner earns placement points. A forfeiting loser earns 0.
-    const stage = stageOf(m);
-    if (stage === 'championship') { tally[w].points += 10; if (!m.forfeit && tally[l]) tally[l].points += 7; }
-    else if (stage === 'battle-3rd') { tally[w].points += 5; if (!m.forfeit && tally[l]) tally[l].points += 3; }
+  });
+
+  // Placement points, deduped per category so duplicates never double-count.
+  const cats = {};
+  Store.getAll().forEach(m => {
+    const s = stageOf(m);
+    if (m.status === 'final' && (s === 'championship' || s === 'battle-3rd')) {
+      cats[m.sportId + '|' + (m.path || []).join('|')] = { sportId: m.sportId, path: m.path || [] };
+    }
+  });
+  Object.values(cats).forEach(({ sportId, path }) => {
+    TEAMS.forEach(t => { tally[t.id].points += teamCategoryPoints(sportId, path, t.id); });
   });
 
   // Special events: add placement points (1st=10, 2nd=7, 3rd=5, 4th=3).
