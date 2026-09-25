@@ -20,6 +20,7 @@ const el = {
   wrapForfeitBy: $('wrap-forfeit-by'), forfeitBy: $('f-forfeit-by'),
   submitBtn: $('submit-btn'), cancelEdit: $('cancel-edit'),
   filterSport: $('filter-sport'), filterStatus: $('filter-status'),
+  filterCat: $('filter-cat'), wrapFilterCat: $('wrap-filter-cat'), filterStage: $('filter-stage'),
   list: $('admin-list'), toast: $('toast')
 };
 
@@ -356,7 +357,11 @@ function renderList() {
   });
   const fs = el.filterSport.value;
   const fst = el.filterStatus.value;
+  const fc = el.filterCat.value;
+  const fstage = el.filterStage.value;
   if (fs) list = list.filter(m => m.sportId === fs);
+  if (fc) { const p = fc.split('|'); list = list.filter(m => samePath(m.path, p)); }
+  if (fstage) list = list.filter(m => stageOf(m) === fstage);
   if (fst) list = list.filter(m => m.status === fst);
 
   if (!list.length) {
@@ -449,7 +454,36 @@ function renderList() {
   el.list.querySelectorAll('[data-reopen]').forEach(b => b.onclick = () => reopenGame(b.dataset.reopen));
 }
 
-el.filterSport.addEventListener('change', renderList);
+// All leaf category paths for a sport, e.g. [['novice','doubles-women'], ...].
+function leafPaths(sport) {
+  if (!sport || !sport.children) return [];
+  const out = [];
+  (function walk(path) {
+    const kids = childrenByPath(sport, path);
+    if (!kids.length) { if (path.length) out.push(path.slice()); return; }
+    kids.forEach(k => walk(path.concat(k.id)));
+  })([]);
+  return out;
+}
+
+// Rebuild the category filter for the selected sport (hidden if it has none).
+function refreshCategoryFilter() {
+  const sport = getSport(el.filterSport.value);
+  el.filterCat.value = '';
+  if (!sport || !sport.children) {
+    el.filterCat.innerHTML = '<option value="">All categories</option>';
+    el.wrapFilterCat.style.display = 'none';
+    return;
+  }
+  const opts = ['<option value="">All categories</option>'];
+  leafPaths(sport).forEach(p => opts.push(opt(p.join('|'), categoryLabel(sport.id, p))));
+  el.filterCat.innerHTML = opts.join('');
+  el.wrapFilterCat.style.display = '';
+}
+
+el.filterSport.addEventListener('change', () => { refreshCategoryFilter(); renderList(); });
+el.filterCat.addEventListener('change', renderList);
+el.filterStage.addEventListener('change', renderList);
 el.filterStatus.addEventListener('change', renderList);
 
 /* ---- Data backup / restore -------------------------------- */

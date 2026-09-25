@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSC Scoreboard - Admin</title>
   <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
-  <link rel="stylesheet" href="css/style.css?v=20260925014215" />
+  <link rel="stylesheet" href="css/style.css?v=20260925014926" />
 </head>
 <body>
   <header class="site-header admin-bar">
@@ -160,6 +160,19 @@
         <div class="field">
           <label for="filter-sport">Filter by sport</label>
           <select id="filter-sport"><option value="">All sports</option></select>
+        </div>
+        <div class="field" id="wrap-filter-cat" style="display:none">
+          <label for="filter-cat">Filter by category</label>
+          <select id="filter-cat"><option value="">All categories</option></select>
+        </div>
+        <div class="field">
+          <label for="filter-stage">Filter by stage</label>
+          <select id="filter-stage">
+            <option value="">All stages</option>
+            <option value="round-robin">Round Robin</option>
+            <option value="championship">Championship</option>
+            <option value="battle-3rd">Battle for 3rd</option>
+          </select>
         </div>
         <div class="field">
           <label for="filter-status">Filter by status</label>
@@ -363,6 +376,7 @@
         <div class="cl-entry">
           <div class="cl-date">2026-09-25</div>
           <ul>
+            <li>Scheduled &amp; Past Games can now be filtered by category and by stage (Round Robin / Championship / Battle for 3rd).</li>
             <li>Fixed double-counted points: if a Championship or Battle for 3rd is recorded more than once in a category, only the latest one counts.</li>
           </ul>
         </div>
@@ -434,8 +448,8 @@
   <div class="footer">CSC Sports Scoreboard &bull; Admin</div>
   <div class="toast" id="toast"></div>
 
-  <script src="js/config.js?v=20260925014215"></script>
-  <script src="js/data.js?v=20260925014215"></script>
-  <script src="js/admin.js?v=20260925014215"></script>
+  <script src="js/config.js?v=20260925014926"></script>
+  <script src="js/data.js?v=20260925014926"></script>
+  <script src="js/admin.js?v=20260925014926"></script>
 </body>
 </html>
